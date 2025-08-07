@@ -1,0 +1,9 @@
+name: todo_list
+description: Lista de tarefas simples em Dart
+version: 1.0.0
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  web: ^0.1.4-beta 
