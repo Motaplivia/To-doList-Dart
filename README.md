@@ -2,6 +2,8 @@
 
 Uma aplicação simples de lista de tarefas desenvolvida em Dart para web.
 
+<img width="479" height="920" alt="Image" src="https://github.com/user-attachments/assets/1ab57ac8-73c1-418e-9be5-86f2420f13f5" />
+
 ## Funcionalidades
 
 - ✅ Adicionar tarefas com título e descrição
