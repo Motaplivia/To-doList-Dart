@@ -277,6 +277,21 @@
       }
       return B.UnknownJavaScriptObject_methods;
     },
+    JSArray_JSArray$fixed($length, $E) {
+      if ($length < 0 || $length > 4294967295)
+        throw A.wrapException(A.RangeError$range($length, 0, 4294967295, "length", null));
+      return J.JSArray_JSArray$markFixed(new Array($length), $E);
+    },
+    JSArray_JSArray$growable($length, $E) {
+      if ($length < 0)
+        throw A.wrapException(A.ArgumentError$("Length must be a non-negative integer: " + $length, null));
+      return A._setArrayType(new Array($length), $E._eval$1("JSArray<0>"));
+    },
+    JSArray_JSArray$markFixed(allocation, $E) {
+      var t1 = A._setArrayType(allocation, $E._eval$1("JSArray<0>"));
+      t1.$flags = 1;
+      return t1;
+    },
     JSString__isWhitespace(codeUnit) {
       if (codeUnit < 256)
         switch (codeUnit) {
@@ -440,6 +455,9 @@
     get$hashCode$(receiver) {
       return J.getInterceptor$(receiver).get$hashCode(receiver);
     },
+    get$isEmpty$asx(receiver) {
+      return J.getInterceptor$asx(receiver).get$isEmpty(receiver);
+    },
     get$isNotEmpty$asx(receiver) {
       return J.getInterceptor$asx(receiver).get$isNotEmpty(receiver);
     },
@@ -466,11 +484,20 @@
             return receiver[a0];
       return J.getInterceptor$asx(receiver).$index(receiver, a0);
     },
+    $indexSet$ax(receiver, a0, a1) {
+      return J.getInterceptor$ax(receiver).$indexSet(receiver, a0, a1);
+    },
     addEventListener$3$x(receiver, a0, a1, a2) {
       return J.getInterceptor$x(receiver).addEventListener$3(receiver, a0, a1, a2);
     },
     elementAt$1$ax(receiver, a0) {
       return J.getInterceptor$ax(receiver).elementAt$1(receiver, a0);
+    },
+    forEach$1$x(receiver, a0) {
+      return J.getInterceptor$x(receiver).forEach$1(receiver, a0);
+    },
+    map$1$1$ax(receiver, a0, $T1) {
+      return J.getInterceptor$ax(receiver).map$1$1(receiver, a0, $T1);
     },
     remove$0$x(receiver) {
       return J.getInterceptor$x(receiver).remove$0(receiver);
@@ -641,6 +668,16 @@
       if (object instanceof A.Closure)
         return object.toString$0(0);
       return "Instance of '" + A.Primitives_objectTypeName(object) + "'";
+    },
+    Primitives_stringFromCharCode(charCode) {
+      var bits;
+      if (charCode <= 65535)
+        return String.fromCharCode(charCode);
+      if (charCode <= 1114111) {
+        bits = charCode - 65536;
+        return String.fromCharCode((B.JSInt_methods._shrOtherPositive$1(bits, 10) | 55296) >>> 0, bits & 1023 | 56320);
+      }
+      throw A.wrapException(A.RangeError$range(charCode, 0, 1114111, null, null));
     },
     Primitives_extractStackTrace(error) {
       var jsError = error.$thrownJsError;
@@ -3153,6 +3190,9 @@
       this.f = t1;
       this.T = t2;
     },
+    LinkedHashMap_LinkedHashMap($K, $V) {
+      return new A.JsLinkedHashMap($K._eval$1("@<0>")._bind$1($V)._eval$1("JsLinkedHashMap<1,2>"));
+    },
     LinkedHashMap_LinkedHashMap$_literal(keyValuePairs, $K, $V) {
       return $K._eval$1("@<0>")._bind$1($V)._eval$1("LinkedHashMap<1,2>")._as(A.fillLiteralMap(keyValuePairs, new A.JsLinkedHashMap($K._eval$1("@<0>")._bind$1($V)._eval$1("JsLinkedHashMap<1,2>"))));
     },
@@ -3167,6 +3207,11 @@
       table["<non-identifier-key>"] = table;
       delete table["<non-identifier-key>"];
       return table;
+    },
+    LinkedHashMap_LinkedHashMap$from(other, $K, $V) {
+      var result = A.LinkedHashMap_LinkedHashMap($K, $V);
+      J.forEach$1$x(other, new A.LinkedHashMap_LinkedHashMap$from_closure(result, $K, $V));
+      return result;
     },
     LinkedHashSet_LinkedHashSet$from(elements, $E) {
       var t1, _i,
@@ -3185,7 +3230,7 @@
         B.JSArray_methods.add$1($.toStringVisiting, m);
         result._contents += "{";
         t1.first = true;
-        m.forEach$1(0, new A.MapBase_mapToString_closure(t1, result));
+        J.forEach$1$x(m, new A.MapBase_mapToString_closure(t1, result));
         result._contents += "}";
       } finally {
         if (0 >= $.toStringVisiting.length)
@@ -3213,6 +3258,11 @@
       _._collection$_current = _._collection$_cell = null;
       _.$ti = t2;
     },
+    LinkedHashMap_LinkedHashMap$from_closure: function LinkedHashMap_LinkedHashMap$from_closure(t0, t1, t2) {
+      this.result = t0;
+      this.K = t1;
+      this.V = t2;
+    },
     ListBase: function ListBase() {
     },
     MapBase: function MapBase() {
@@ -3225,12 +3275,109 @@
     },
     _SetBase: function _SetBase() {
     },
+    _parseJson(source, reviver) {
+      var e, exception, t1, parsed = null;
+      try {
+        parsed = JSON.parse(source);
+      } catch (exception) {
+        e = A.unwrapException(exception);
+        t1 = String(e);
+        throw A.wrapException(new A.FormatException(t1));
+      }
+      t1 = A._convertJsonToDartLazy(parsed);
+      return t1;
+    },
+    _convertJsonToDartLazy(object) {
+      var i;
+      if (object == null)
+        return null;
+      if (typeof object != "object")
+        return object;
+      if (!Array.isArray(object))
+        return new A._JsonMap(object, Object.create(null));
+      for (i = 0; i < object.length; ++i)
+        object[i] = A._convertJsonToDartLazy(object[i]);
+      return object;
+    },
+    JsonUnsupportedObjectError$(unsupportedObject, cause, partialResult) {
+      return new A.JsonUnsupportedObjectError(unsupportedObject, cause);
+    },
+    _defaultToEncodable(object) {
+      return object.toJson$0();
+    },
+    _JsonStringStringifier$(_sink, _toEncodable) {
+      return new A._JsonStringStringifier(_sink, [], A.convert___defaultToEncodable$closure());
+    },
+    _JsonStringStringifier_stringify(object, toEncodable, indent) {
+      var t1,
+        output = new A.StringBuffer(""),
+        stringifier = A._JsonStringStringifier$(output, toEncodable);
+      stringifier.writeObject$1(object);
+      t1 = output._contents;
+      return t1.charCodeAt(0) == 0 ? t1 : t1;
+    },
+    _JsonMap: function _JsonMap(t0, t1) {
+      this._original = t0;
+      this._processed = t1;
+      this._data = null;
+    },
+    _JsonMapKeyIterable: function _JsonMapKeyIterable(t0) {
+      this._parent = t0;
+    },
+    Codec: function Codec() {
+    },
+    Converter: function Converter() {
+    },
+    JsonUnsupportedObjectError: function JsonUnsupportedObjectError(t0, t1) {
+      this.unsupportedObject = t0;
+      this.cause = t1;
+    },
+    JsonCyclicError: function JsonCyclicError(t0, t1) {
+      this.unsupportedObject = t0;
+      this.cause = t1;
+    },
+    JsonCodec: function JsonCodec() {
+    },
+    JsonEncoder: function JsonEncoder(t0) {
+      this._toEncodable = t0;
+    },
+    JsonDecoder: function JsonDecoder(t0) {
+      this._reviver = t0;
+    },
+    _JsonStringifier: function _JsonStringifier() {
+    },
+    _JsonStringifier_writeMap_closure: function _JsonStringifier_writeMap_closure(t0, t1) {
+      this._box_0 = t0;
+      this.keyValueList = t1;
+    },
+    _JsonStringStringifier: function _JsonStringStringifier(t0, t1, t2) {
+      this._sink = t0;
+      this._seen = t1;
+      this._toEncodable = t2;
+    },
     Error__throw(error, stackTrace) {
       error = A.initializeExceptionWrapper(error, new Error());
       if (error == null)
         error = type$.Object._as(error);
       error.stack = stackTrace.toString$0(0);
       throw error;
+    },
+    List_List$filled($length, fill, growable, $E) {
+      var i,
+        result = growable ? J.JSArray_JSArray$growable($length, $E) : J.JSArray_JSArray$fixed($length, $E);
+      if ($length !== 0 && fill != null)
+        for (i = 0; i < result.length; ++i)
+          result[i] = fill;
+      return result;
+    },
+    List_List$_of(elements, $E) {
+      var list, t1;
+      if (Array.isArray(elements))
+        return A._setArrayType(elements.slice(0), $E._eval$1("JSArray<0>"));
+      list = A._setArrayType([], $E._eval$1("JSArray<0>"));
+      for (t1 = J.get$iterator$ax(elements); t1.moveNext$0();)
+        B.JSArray_methods.add$1(list, t1.get$current());
+      return list;
     },
     StringBuffer__writeAll(string, objects, separator) {
       var iterator = J.get$iterator$ax(objects);
@@ -3276,6 +3423,16 @@
     },
     RangeError$range(invalidValue, minValue, maxValue, $name, message) {
       return new A.RangeError(minValue, maxValue, true, invalidValue, $name, "Invalid value");
+    },
+    RangeError_checkValidRange(start, end, $length) {
+      if (start > $length)
+        throw A.wrapException(A.RangeError$range(start, 0, $length, "start", null));
+      if (end != null) {
+        if (start > end || end > $length)
+          throw A.wrapException(A.RangeError$range(end, start, $length, "end", null));
+        return end;
+      }
+      return $length;
     },
     RangeError_checkNotNegative(value, $name) {
       if (value < 0)
@@ -3466,6 +3623,9 @@
     _Exception: function _Exception(t0) {
       this.message = t0;
     },
+    FormatException: function FormatException(t0) {
+      this.message = t0;
+    },
     Iterable: function Iterable() {
     },
     Null: function Null() {
@@ -3642,6 +3802,11 @@
     },
     SpanElement: function SpanElement() {
     },
+    Storage: function Storage() {
+    },
+    Storage_keys_closure: function Storage_keys_closure(t0) {
+      this.keys = t0;
+    },
     TableElement: function TableElement() {
     },
     TableRowElement: function TableRowElement() {
@@ -3753,6 +3918,8 @@
     },
     _NodeList_JavaScriptObject_ListMixin_ImmutableListMixin: function _NodeList_JavaScriptObject_ListMixin_ImmutableListMixin() {
     },
+    _Storage_JavaScriptObject_MapMixin: function _Storage_JavaScriptObject_MapMixin() {
+    },
     __NamedNodeMap_JavaScriptObject_ListMixin: function __NamedNodeMap_JavaScriptObject_ListMixin() {
     },
     __NamedNodeMap_JavaScriptObject_ListMixin_ImmutableListMixin: function __NamedNodeMap_JavaScriptObject_ListMixin_ImmutableListMixin() {
@@ -3769,14 +3936,21 @@
     },
     main_closure: function main_closure() {
     },
-    main_closure_getTotalPages: function main_closure_getTotalPages(t0, t1) {
-      this.tasks = t0;
-      this.itemsPerPage = t1;
+    main_closure_saveTasksToStorage: function main_closure_saveTasksToStorage(t0) {
+      this._box_0 = t0;
     },
-    main_closure_getCurrentPageTasks: function main_closure_getCurrentPageTasks(t0, t1, t2) {
+    main_closure_loadTasksFromStorage: function main_closure_loadTasksFromStorage(t0) {
+      this._box_0 = t0;
+    },
+    main__loadTasksFromStorage_closure: function main__loadTasksFromStorage_closure() {
+    },
+    main_closure_getTotalPages: function main_closure_getTotalPages(t0, t1) {
       this._box_0 = t0;
       this.itemsPerPage = t1;
-      this.tasks = t2;
+    },
+    main_closure_getCurrentPageTasks: function main_closure_getCurrentPageTasks(t0, t1) {
+      this._box_0 = t0;
+      this.itemsPerPage = t1;
     },
     main__closure: function main__closure(t0, t1, t2, t3) {
       var _ = this;
@@ -3802,31 +3976,32 @@
     main__closure0: function main__closure0(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10) {
       var _ = this;
       _._box_0 = t0;
-      _.tasks = t1;
-      _.taskList = t2;
-      _.emptyState = t3;
-      _.paginationContainer = t4;
-      _.getTotalPages = t5;
-      _.getCurrentPageTasks = t6;
-      _.itemsPerPage = t7;
+      _.taskList = t1;
+      _.emptyState = t2;
+      _.paginationContainer = t3;
+      _.getTotalPages = t4;
+      _.getCurrentPageTasks = t5;
+      _.itemsPerPage = t6;
+      _.saveTasksToStorage = t7;
       _.updateList = t8;
       _.countSpan = t9;
       _.updatePagination = t10;
     },
-    main___closure: function main___closure(t0, t1, t2, t3) {
+    main___closure: function main___closure(t0, t1, t2, t3, t4) {
       var _ = this;
-      _.tasks = t0;
+      _._box_0 = t0;
       _.globalIndex = t1;
       _.checkbox = t2;
-      _.updateList = t3;
+      _.saveTasksToStorage = t3;
+      _.updateList = t4;
     },
     main___closure0: function main___closure0(t0, t1, t2, t3, t4, t5) {
       var _ = this;
       _._box_0 = t0;
       _.editTitleInput = t1;
       _.editDescriptionInput = t2;
-      _.tasks = t3;
-      _.globalIndex = t4;
+      _.globalIndex = t3;
+      _.saveTasksToStorage = t4;
       _.updateList = t5;
     },
     main___closure1: function main___closure1(t0, t1) {
@@ -3841,8 +4016,8 @@
     main___closure3: function main___closure3(t0, t1, t2, t3) {
       var _ = this;
       _._box_0 = t0;
-      _.tasks = t1;
-      _.globalIndex = t2;
+      _.globalIndex = t1;
+      _.saveTasksToStorage = t2;
       _.updateList = t3;
     },
     main___closure4: function main___closure4() {
@@ -3852,8 +4027,8 @@
       _._box_0 = t0;
       _.taskTitleInput = t1;
       _.taskDescriptionInput = t2;
-      _.tasks = t3;
-      _.getTotalPages = t4;
+      _.getTotalPages = t3;
+      _.saveTasksToStorage = t4;
       _.updateList = t5;
     },
     main__closure2: function main__closure2(t0) {
@@ -3960,6 +4135,14 @@
       receiver.$flags & 1 && A.throwUnsupportedOperation(receiver, 29);
       receiver.push(value);
     },
+    clear$0(receiver) {
+      receiver.$flags & 1 && A.throwUnsupportedOperation(receiver, "clear", "clear");
+      receiver.length = 0;
+    },
+    map$1$1(receiver, f, $T) {
+      var t1 = A._arrayInstanceType(receiver);
+      return new A.MappedListIterable(receiver, t1._bind$1($T)._eval$1("1(2)")._as(f), t1._eval$1("@<1>")._bind$1($T)._eval$1("MappedListIterable<1,2>"));
+    },
     elementAt$1(receiver, index) {
       if (!(index < receiver.length))
         return A.ioore(receiver, index);
@@ -3993,6 +4176,9 @@
           return true;
       return false;
     },
+    get$isEmpty(receiver) {
+      return receiver.length === 0;
+    },
     get$isNotEmpty(receiver) {
       return receiver.length !== 0;
     },
@@ -4012,6 +4198,15 @@
       if (!(index >= 0 && index < receiver.length))
         throw A.wrapException(A.diagnoseIndexError(receiver, index));
       return receiver[index];
+    },
+    $indexSet(receiver, index, value) {
+      var t1;
+      A._arrayInstanceType(receiver)._precomputed1._as(value);
+      receiver.$flags & 2 && A.throwUnsupportedOperation(receiver);
+      t1 = receiver.length;
+      if (index >= t1)
+        throw A.wrapException(A.diagnoseIndexError(receiver, index));
+      receiver[index] = value;
     },
     $isIterable: 1,
     $isList: 1
@@ -4110,6 +4305,9 @@
       if (otherLength > receiver.length)
         return false;
       return pattern === receiver.substring(0, otherLength);
+    },
+    substring$2(receiver, start, end) {
+      return receiver.substring(start, A.RangeError_checkValidRange(start, end, receiver.length));
     },
     toLowerCase$0(receiver) {
       return receiver.toLowerCase();
@@ -4347,11 +4545,20 @@
     get$length(_) {
       return this.__js_helper$_length;
     },
+    get$isEmpty(_) {
+      return this.__js_helper$_length === 0;
+    },
     get$isNotEmpty(_) {
       return this.__js_helper$_length !== 0;
     },
-    get$keys() {
-      return new A.LinkedHashMapKeysIterable(this, this.$ti._eval$1("LinkedHashMapKeysIterable<1>"));
+    get$keys(_) {
+      return new A.LinkedHashMapKeysIterable(this, A._instanceType(this)._eval$1("LinkedHashMapKeysIterable<1>"));
+    },
+    containsKey$1(_, key) {
+      var strings = this._strings;
+      if (strings == null)
+        return false;
+      return strings[key] != null;
     },
     $index(_, key) {
       var strings, cell, t1, nums, _null = null;
@@ -4377,15 +4584,15 @@
         rest = this.__js_helper$_rest;
       if (rest == null)
         return null;
-      bucket = rest[J.get$hashCode$(key) & 1073741823];
+      bucket = rest[this.internalComputeHashCode$1(key)];
       index = this.internalFindBucketIndex$2(bucket, key);
       if (index < 0)
         return null;
       return bucket[index].hashMapCellValue;
     },
     $indexSet(_, key, value) {
-      var strings, nums, rest, hash, bucket, index, _this = this,
-        t1 = _this.$ti;
+      var strings, nums, _this = this,
+        t1 = A._instanceType(_this);
       t1._precomputed1._as(key);
       t1._rest[1]._as(value);
       if (typeof key == "string") {
@@ -4394,26 +4601,32 @@
       } else if (typeof key == "number" && (key & 0x3fffffff) === key) {
         nums = _this._nums;
         _this._addHashTableEntry$3(nums == null ? _this._nums = _this._newHashTable$0() : nums, key, value);
-      } else {
-        rest = _this.__js_helper$_rest;
-        if (rest == null)
-          rest = _this.__js_helper$_rest = _this._newHashTable$0();
-        hash = J.get$hashCode$(key) & 1073741823;
-        bucket = rest[hash];
-        if (bucket == null)
-          rest[hash] = [_this._newLinkedCell$2(key, value)];
-        else {
-          index = _this.internalFindBucketIndex$2(bucket, key);
-          if (index >= 0)
-            bucket[index].hashMapCellValue = value;
-          else
-            bucket.push(_this._newLinkedCell$2(key, value));
-        }
+      } else
+        _this.internalSet$2(key, value);
+    },
+    internalSet$2(key, value) {
+      var rest, hash, bucket, index, _this = this,
+        t1 = A._instanceType(_this);
+      t1._precomputed1._as(key);
+      t1._rest[1]._as(value);
+      rest = _this.__js_helper$_rest;
+      if (rest == null)
+        rest = _this.__js_helper$_rest = _this._newHashTable$0();
+      hash = _this.internalComputeHashCode$1(key);
+      bucket = rest[hash];
+      if (bucket == null)
+        rest[hash] = [_this._newLinkedCell$2(key, value)];
+      else {
+        index = _this.internalFindBucketIndex$2(bucket, key);
+        if (index >= 0)
+          bucket[index].hashMapCellValue = value;
+        else
+          bucket.push(_this._newLinkedCell$2(key, value));
       }
     },
     forEach$1(_, action) {
       var cell, modifications, _this = this;
-      _this.$ti._eval$1("~(1,2)")._as(action);
+      A._instanceType(_this)._eval$1("~(1,2)")._as(action);
       cell = _this._first;
       modifications = _this._modifications;
       for (; cell != null;) {
@@ -4425,7 +4638,7 @@
     },
     _addHashTableEntry$3(table, key, value) {
       var cell,
-        t1 = this.$ti;
+        t1 = A._instanceType(this);
       t1._precomputed1._as(key);
       t1._rest[1]._as(value);
       cell = table[key];
@@ -4439,7 +4652,7 @@
     },
     _newLinkedCell$2(key, value) {
       var _this = this,
-        t1 = _this.$ti,
+        t1 = A._instanceType(_this),
         cell = new A.LinkedHashMapCell(t1._precomputed1._as(key), t1._rest[1]._as(value));
       if (_this._first == null)
         _this._first = _this._last = cell;
@@ -4452,6 +4665,9 @@
       ++_this.__js_helper$_length;
       _this._modified$0();
       return cell;
+    },
+    internalComputeHashCode$1(key) {
+      return J.get$hashCode$(key) & 1073741823;
     },
     internalFindBucketIndex$2(bucket, key) {
       var $length, i;
@@ -4512,19 +4728,19 @@
     call$1(o) {
       return this.getTag(o);
     },
-    $signature: 9
+    $signature: 4
   };
   A.initHooks_closure0.prototype = {
     call$2(o, tag) {
       return this.getUnknownTag(o, tag);
     },
-    $signature: 10
+    $signature: 11
   };
   A.initHooks_closure1.prototype = {
     call$1(tag) {
       return this.prototypeForTag(A._asString(tag));
     },
-    $signature: 11
+    $signature: 12
   };
   A._Cell.prototype = {
     _readLocal$0() {
@@ -4561,7 +4777,7 @@
       t1.storedCallback = null;
       f.call$0();
     },
-    $signature: 4
+    $signature: 5
   };
   A._AsyncRun__initializeScheduleImmediate_closure.prototype = {
     call$1(callback) {
@@ -4571,19 +4787,19 @@
       t2 = this.span;
       t1.firstChild ? t1.removeChild(t2) : t1.appendChild(t2);
     },
-    $signature: 12
+    $signature: 13
   };
   A._AsyncRun__scheduleImmediateJsOverride_internalCallback.prototype = {
     call$0() {
       this.callback.call$0();
     },
-    $signature: 5
+    $signature: 6
   };
   A._AsyncRun__scheduleImmediateWithSetImmediate_internalCallback.prototype = {
     call$0() {
       this.callback.call$0();
     },
-    $signature: 5
+    $signature: 6
   };
   A._TimerImpl.prototype = {
     _TimerImpl$2(milliseconds, callback) {
@@ -4812,7 +5028,7 @@
     call$1(__wc0_formal) {
       this.joinedResult._completeWithResultOf$1(this.originalSource);
     },
-    $signature: 4
+    $signature: 5
   };
   A._Future__propagateToListeners_handleWhenCompleteCallback_closure0.prototype = {
     call$2(e, s) {
@@ -4820,7 +5036,7 @@
       type$.StackTrace._as(s);
       this.joinedResult._completeErrorObject$1(new A.AsyncError(e, s));
     },
-    $signature: 13
+    $signature: 14
   };
   A._Future__propagateToListeners_handleValueCallback.prototype = {
     call$0() {
@@ -5110,6 +5326,12 @@
     },
     $isIterator: 1
   };
+  A.LinkedHashMap_LinkedHashMap$from_closure.prototype = {
+    call$2(k, v) {
+      this.result.$indexSet(0, this.K._as(k), this.V._as(v));
+    },
+    $signature: 15
+  };
   A.ListBase.prototype = {
     get$iterator(receiver) {
       return new A.ListIterator(receiver, this.get$length(receiver), A.instanceType(receiver)._eval$1("ListIterator<ListBase.E>"));
@@ -5123,6 +5345,10 @@
     get$isNotEmpty(receiver) {
       return !this.get$isEmpty(receiver);
     },
+    map$1$1(receiver, f, $T) {
+      var t1 = A.instanceType(receiver);
+      return new A.MappedListIterable(receiver, t1._bind$1($T)._eval$1("1(ListBase.E)")._as(f), t1._eval$1("@<ListBase.E>")._bind$1($T)._eval$1("MappedListIterable<1,2>"));
+    },
     toString$0(receiver) {
       return A.Iterable_iterableToFullString(receiver, "[", "]");
     },
@@ -5130,24 +5356,27 @@
     $isList: 1
   };
   A.MapBase.prototype = {
-    forEach$1(_, action) {
+    forEach$1(receiver, action) {
       var t2, key, t3,
-        t1 = A._instanceType(this);
+        t1 = A.instanceType(receiver);
       t1._eval$1("~(MapBase.K,MapBase.V)")._as(action);
-      for (t2 = J.get$iterator$ax(this.get$keys()), t1 = t1._eval$1("MapBase.V"); t2.moveNext$0();) {
+      for (t2 = J.get$iterator$ax(this.get$keys(receiver)), t1 = t1._eval$1("MapBase.V"); t2.moveNext$0();) {
         key = t2.get$current();
-        t3 = this.$index(0, key);
+        t3 = this.$index(receiver, key);
         action.call$2(key, t3 == null ? t1._as(t3) : t3);
       }
     },
-    get$length(_) {
-      return J.get$length$asx(this.get$keys());
+    get$length(receiver) {
+      return J.get$length$asx(this.get$keys(receiver));
     },
-    get$isNotEmpty(_) {
-      return J.get$isNotEmpty$asx(this.get$keys());
+    get$isEmpty(receiver) {
+      return J.get$isEmpty$asx(this.get$keys(receiver));
     },
-    toString$0(_) {
-      return A.MapBase_mapToString(this);
+    get$isNotEmpty(receiver) {
+      return J.get$isNotEmpty$asx(this.get$keys(receiver));
+    },
+    toString$0(receiver) {
+      return A.MapBase_mapToString(receiver);
     },
     $isMap: 1
   };
@@ -5164,7 +5393,7 @@
       t2 = A.S(v);
       t1._contents += t2;
     },
-    $signature: 14
+    $signature: 7
   };
   A.SetBase.prototype = {
     get$isNotEmpty(_) {
@@ -5182,6 +5411,398 @@
     $isSet: 1
   };
   A._SetBase.prototype = {};
+  A._JsonMap.prototype = {
+    $index(_, key) {
+      var result,
+        t1 = this._processed;
+      if (t1 == null)
+        return this._data.$index(0, key);
+      else if (typeof key != "string")
+        return null;
+      else {
+        result = t1[key];
+        return typeof result == "undefined" ? this._process$1(key) : result;
+      }
+    },
+    get$length(_) {
+      return this._processed == null ? this._data.__js_helper$_length : this._computeKeys$0().length;
+    },
+    get$isEmpty(_) {
+      return this.get$length(0) === 0;
+    },
+    get$isNotEmpty(_) {
+      return this.get$length(0) > 0;
+    },
+    get$keys(_) {
+      var t1;
+      if (this._processed == null) {
+        t1 = this._data;
+        return new A.LinkedHashMapKeysIterable(t1, A._instanceType(t1)._eval$1("LinkedHashMapKeysIterable<1>"));
+      }
+      return new A._JsonMapKeyIterable(this);
+    },
+    $indexSet(_, key, value) {
+      var processed, original, _this = this;
+      if (_this._processed == null)
+        _this._data.$indexSet(0, key, value);
+      else if (_this.containsKey$1(0, key)) {
+        processed = _this._processed;
+        processed[key] = value;
+        original = _this._original;
+        if (original == null ? processed != null : original !== processed)
+          original[key] = null;
+      } else
+        _this._upgrade$0().$indexSet(0, key, value);
+    },
+    containsKey$1(_, key) {
+      if (this._processed == null)
+        return this._data.containsKey$1(0, key);
+      return Object.prototype.hasOwnProperty.call(this._original, key);
+    },
+    forEach$1(_, f) {
+      var keys, i, key, value, _this = this;
+      type$.void_Function_String_dynamic._as(f);
+      if (_this._processed == null)
+        return _this._data.forEach$1(0, f);
+      keys = _this._computeKeys$0();
+      for (i = 0; i < keys.length; ++i) {
+        key = keys[i];
+        value = _this._processed[key];
+        if (typeof value == "undefined") {
+          value = A._convertJsonToDartLazy(_this._original[key]);
+          _this._processed[key] = value;
+        }
+        f.call$2(key, value);
+        if (keys !== _this._data)
+          throw A.wrapException(A.ConcurrentModificationError$(_this));
+      }
+    },
+    _computeKeys$0() {
+      var keys = type$.nullable_List_dynamic._as(this._data);
+      if (keys == null)
+        keys = this._data = A._setArrayType(Object.keys(this._original), type$.JSArray_String);
+      return keys;
+    },
+    _upgrade$0() {
+      var result, keys, i, t1, key, _this = this;
+      if (_this._processed == null)
+        return _this._data;
+      result = A.LinkedHashMap_LinkedHashMap$_empty(type$.String, type$.dynamic);
+      keys = _this._computeKeys$0();
+      for (i = 0; t1 = keys.length, i < t1; ++i) {
+        key = keys[i];
+        result.$indexSet(0, key, _this.$index(0, key));
+      }
+      if (t1 === 0)
+        B.JSArray_methods.add$1(keys, "");
+      else
+        B.JSArray_methods.clear$0(keys);
+      _this._original = _this._processed = null;
+      return _this._data = result;
+    },
+    _process$1(key) {
+      var result;
+      if (!Object.prototype.hasOwnProperty.call(this._original, key))
+        return null;
+      result = A._convertJsonToDartLazy(this._original[key]);
+      return this._processed[key] = result;
+    }
+  };
+  A._JsonMapKeyIterable.prototype = {
+    get$length(_) {
+      return this._parent.get$length(0);
+    },
+    elementAt$1(_, index) {
+      var t1 = this._parent;
+      if (t1._processed == null)
+        t1 = t1.get$keys(0).elementAt$1(0, index);
+      else {
+        t1 = t1._computeKeys$0();
+        if (!(index < t1.length))
+          return A.ioore(t1, index);
+        t1 = t1[index];
+      }
+      return t1;
+    },
+    get$iterator(_) {
+      var t1 = this._parent;
+      if (t1._processed == null) {
+        t1 = t1.get$keys(0);
+        t1 = t1.get$iterator(t1);
+      } else {
+        t1 = t1._computeKeys$0();
+        t1 = new J.ArrayIterator(t1, t1.length, A._arrayInstanceType(t1)._eval$1("ArrayIterator<1>"));
+      }
+      return t1;
+    }
+  };
+  A.Codec.prototype = {};
+  A.Converter.prototype = {};
+  A.JsonUnsupportedObjectError.prototype = {
+    toString$0(_) {
+      var safeString = A.Error_safeToString(this.unsupportedObject);
+      return (this.cause != null ? "Converting object to an encodable object failed:" : "Converting object did not return an encodable object:") + " " + safeString;
+    }
+  };
+  A.JsonCyclicError.prototype = {
+    toString$0(_) {
+      return "Cyclic error in JSON stringify";
+    }
+  };
+  A.JsonCodec.prototype = {
+    decode$2$reviver(_, source, reviver) {
+      var t1 = A._parseJson(source, this.get$decoder()._reviver);
+      return t1;
+    },
+    encode$2$toEncodable(value, toEncodable) {
+      var t1 = A._JsonStringStringifier_stringify(value, this.get$encoder()._toEncodable, null);
+      return t1;
+    },
+    get$encoder() {
+      return B.JsonEncoder_null;
+    },
+    get$decoder() {
+      return B.JsonDecoder_null;
+    }
+  };
+  A.JsonEncoder.prototype = {};
+  A.JsonDecoder.prototype = {};
+  A._JsonStringifier.prototype = {
+    writeStringContent$1(s) {
+      var t1, offset, i, charCode, t2, t3,
+        $length = s.length;
+      for (t1 = this._sink, offset = 0, i = 0; i < $length; ++i) {
+        charCode = s.charCodeAt(i);
+        if (charCode > 92) {
+          if (charCode >= 55296) {
+            t2 = charCode & 64512;
+            if (t2 === 55296) {
+              t3 = i + 1;
+              t3 = !(t3 < $length && (s.charCodeAt(t3) & 64512) === 56320);
+            } else
+              t3 = false;
+            if (!t3)
+              if (t2 === 56320) {
+                t2 = i - 1;
+                t2 = !(t2 >= 0 && (s.charCodeAt(t2) & 64512) === 55296);
+              } else
+                t2 = false;
+            else
+              t2 = true;
+            if (t2) {
+              if (i > offset)
+                t1._contents += B.JSString_methods.substring$2(s, offset, i);
+              offset = i + 1;
+              t2 = A.Primitives_stringFromCharCode(92);
+              t1._contents += t2;
+              t2 = A.Primitives_stringFromCharCode(117);
+              t1._contents += t2;
+              t2 = A.Primitives_stringFromCharCode(100);
+              t1._contents += t2;
+              t2 = charCode >>> 8 & 15;
+              t2 = A.Primitives_stringFromCharCode(t2 < 10 ? 48 + t2 : 87 + t2);
+              t1._contents += t2;
+              t2 = charCode >>> 4 & 15;
+              t2 = A.Primitives_stringFromCharCode(t2 < 10 ? 48 + t2 : 87 + t2);
+              t1._contents += t2;
+              t2 = charCode & 15;
+              t2 = A.Primitives_stringFromCharCode(t2 < 10 ? 48 + t2 : 87 + t2);
+              t1._contents += t2;
+            }
+          }
+          continue;
+        }
+        if (charCode < 32) {
+          if (i > offset)
+            t1._contents += B.JSString_methods.substring$2(s, offset, i);
+          offset = i + 1;
+          t2 = A.Primitives_stringFromCharCode(92);
+          t1._contents += t2;
+          switch (charCode) {
+            case 8:
+              t2 = A.Primitives_stringFromCharCode(98);
+              t1._contents += t2;
+              break;
+            case 9:
+              t2 = A.Primitives_stringFromCharCode(116);
+              t1._contents += t2;
+              break;
+            case 10:
+              t2 = A.Primitives_stringFromCharCode(110);
+              t1._contents += t2;
+              break;
+            case 12:
+              t2 = A.Primitives_stringFromCharCode(102);
+              t1._contents += t2;
+              break;
+            case 13:
+              t2 = A.Primitives_stringFromCharCode(114);
+              t1._contents += t2;
+              break;
+            default:
+              t2 = A.Primitives_stringFromCharCode(117);
+              t1._contents += t2;
+              t2 = A.Primitives_stringFromCharCode(48);
+              t1._contents += t2;
+              t2 = A.Primitives_stringFromCharCode(48);
+              t1._contents += t2;
+              t2 = charCode >>> 4 & 15;
+              t2 = A.Primitives_stringFromCharCode(t2 < 10 ? 48 + t2 : 87 + t2);
+              t1._contents += t2;
+              t2 = charCode & 15;
+              t2 = A.Primitives_stringFromCharCode(t2 < 10 ? 48 + t2 : 87 + t2);
+              t1._contents += t2;
+              break;
+          }
+        } else if (charCode === 34 || charCode === 92) {
+          if (i > offset)
+            t1._contents += B.JSString_methods.substring$2(s, offset, i);
+          offset = i + 1;
+          t2 = A.Primitives_stringFromCharCode(92);
+          t1._contents += t2;
+          t2 = A.Primitives_stringFromCharCode(charCode);
+          t1._contents += t2;
+        }
+      }
+      if (offset === 0)
+        t1._contents += s;
+      else if (offset < $length)
+        t1._contents += B.JSString_methods.substring$2(s, offset, $length);
+    },
+    _checkCycle$1(object) {
+      var t1, t2, i, t3;
+      for (t1 = this._seen, t2 = t1.length, i = 0; i < t2; ++i) {
+        t3 = t1[i];
+        if (object == null ? t3 == null : object === t3)
+          throw A.wrapException(new A.JsonCyclicError(object, null));
+      }
+      B.JSArray_methods.add$1(t1, object);
+    },
+    writeObject$1(object) {
+      var customJson, e, t1, exception, _this = this;
+      if (_this.writeJsonValue$1(object))
+        return;
+      _this._checkCycle$1(object);
+      try {
+        customJson = _this._toEncodable.call$1(object);
+        if (!_this.writeJsonValue$1(customJson)) {
+          t1 = A.JsonUnsupportedObjectError$(object, null, _this.get$_partialResult());
+          throw A.wrapException(t1);
+        }
+        t1 = _this._seen;
+        if (0 >= t1.length)
+          return A.ioore(t1, -1);
+        t1.pop();
+      } catch (exception) {
+        e = A.unwrapException(exception);
+        t1 = A.JsonUnsupportedObjectError$(object, e, _this.get$_partialResult());
+        throw A.wrapException(t1);
+      }
+    },
+    writeJsonValue$1(object) {
+      var t1, t2, success, _this = this;
+      if (typeof object == "number") {
+        if (!isFinite(object))
+          return false;
+        t1 = _this._sink;
+        t2 = B.JSNumber_methods.toString$0(object);
+        t1._contents += t2;
+        return true;
+      } else if (object === true) {
+        _this._sink._contents += "true";
+        return true;
+      } else if (object === false) {
+        _this._sink._contents += "false";
+        return true;
+      } else if (object == null) {
+        _this._sink._contents += "null";
+        return true;
+      } else if (typeof object == "string") {
+        t1 = _this._sink;
+        t1._contents += '"';
+        _this.writeStringContent$1(object);
+        t1._contents += '"';
+        return true;
+      } else if (type$.List_dynamic._is(object)) {
+        _this._checkCycle$1(object);
+        _this.writeList$1(object);
+        t1 = _this._seen;
+        if (0 >= t1.length)
+          return A.ioore(t1, -1);
+        t1.pop();
+        return true;
+      } else if (type$.Map_dynamic_dynamic._is(object)) {
+        _this._checkCycle$1(object);
+        success = _this.writeMap$1(object);
+        t1 = _this._seen;
+        if (0 >= t1.length)
+          return A.ioore(t1, -1);
+        t1.pop();
+        return success;
+      } else
+        return false;
+    },
+    writeList$1(list) {
+      var t2, i,
+        t1 = this._sink;
+      t1._contents += "[";
+      t2 = J.getInterceptor$asx(list);
+      if (t2.get$isNotEmpty(list)) {
+        this.writeObject$1(t2.$index(list, 0));
+        for (i = 1; i < t2.get$length(list); ++i) {
+          t1._contents += ",";
+          this.writeObject$1(t2.$index(list, i));
+        }
+      }
+      t1._contents += "]";
+    },
+    writeMap$1(map) {
+      var t2, keyValueList, i, separator, t3, _this = this, _box_0 = {},
+        t1 = J.getInterceptor$asx(map);
+      if (t1.get$isEmpty(map)) {
+        _this._sink._contents += "{}";
+        return true;
+      }
+      t2 = t1.get$length(map) * 2;
+      keyValueList = A.List_List$filled(t2, null, false, type$.nullable_Object);
+      i = _box_0.i = 0;
+      _box_0.allStringKeys = true;
+      t1.forEach$1(map, new A._JsonStringifier_writeMap_closure(_box_0, keyValueList));
+      if (!_box_0.allStringKeys)
+        return false;
+      t1 = _this._sink;
+      t1._contents += "{";
+      for (separator = '"'; i < t2; i += 2, separator = ',"') {
+        t1._contents += separator;
+        _this.writeStringContent$1(A._asString(keyValueList[i]));
+        t1._contents += '":';
+        t3 = i + 1;
+        if (!(t3 < t2))
+          return A.ioore(keyValueList, t3);
+        _this.writeObject$1(keyValueList[t3]);
+      }
+      t1._contents += "}";
+      return true;
+    }
+  };
+  A._JsonStringifier_writeMap_closure.prototype = {
+    call$2(key, value) {
+      var t1, t2;
+      if (typeof key != "string")
+        this._box_0.allStringKeys = false;
+      t1 = this.keyValueList;
+      t2 = this._box_0;
+      B.JSArray_methods.$indexSet(t1, t2.i++, key);
+      B.JSArray_methods.$indexSet(t1, t2.i++, value);
+    },
+    $signature: 7
+  };
+  A._JsonStringStringifier.prototype = {
+    get$_partialResult() {
+      var t1 = this._sink._contents;
+      return t1.charCodeAt(0) == 0 ? t1 : t1;
+    }
+  };
   A.Error.prototype = {
     get$stackTrace() {
       return A.Primitives_extractStackTrace(this);
@@ -5296,6 +5917,13 @@
       return "Exception: " + this.message;
     }
   };
+  A.FormatException.prototype = {
+    toString$0(_) {
+      var message = this.message,
+        report = "" !== message ? "FormatException: " + message : "FormatException";
+      return report;
+    }
+  };
   A.Iterable.prototype = {
     where$1(_, test) {
       var t1 = A._instanceType(this);
@@ -5370,7 +5998,8 @@
     },
     get$isNotEmpty(_) {
       return this._contents.length !== 0;
-    }
+    },
+    $isStringSink: 1
   };
   A.HtmlElement.prototype = {};
   A.AnchorElement.prototype = {
@@ -5534,7 +6163,7 @@
     call$1(e) {
       return type$.Element._is(type$.Node._as(e));
     },
-    $signature: 15
+    $signature: 16
   };
   A.Event.prototype = {$isEvent: 1};
   A.EventTarget.prototype = {
@@ -5698,6 +6327,49 @@
     }
   };
   A.SpanElement.prototype = {};
+  A.Storage.prototype = {
+    $index(receiver, key) {
+      return receiver.getItem(A._asString(key));
+    },
+    $indexSet(receiver, key, value) {
+      receiver.setItem(key, A._asString(value));
+    },
+    forEach$1(receiver, f) {
+      var i, key, t1;
+      type$.void_Function_String_String._as(f);
+      for (i = 0; true; ++i) {
+        key = receiver.key(i);
+        if (key == null)
+          return;
+        t1 = receiver.getItem(key);
+        t1.toString;
+        f.call$2(key, t1);
+      }
+    },
+    get$keys(receiver) {
+      var keys = A._setArrayType([], type$.JSArray_String);
+      this.forEach$1(receiver, new A.Storage_keys_closure(keys));
+      return keys;
+    },
+    get$length(receiver) {
+      var t1 = receiver.length;
+      t1.toString;
+      return t1;
+    },
+    get$isEmpty(receiver) {
+      return receiver.key(0) == null;
+    },
+    get$isNotEmpty(receiver) {
+      return receiver.key(0) != null;
+    },
+    $isMap: 1
+  };
+  A.Storage_keys_closure.prototype = {
+    call$2(k, v) {
+      return B.JSArray_methods.add$1(this.keys, k);
+    },
+    $signature: 17
+  };
   A.TableElement.prototype = {
     createFragment$3$treeSanitizer$validator(receiver, html, treeSanitizer, validator) {
       var table,
@@ -5788,13 +6460,13 @@
     forEach$1(_, f) {
       var t1, t2, t3, _i, key, value;
       type$.void_Function_String_String._as(f);
-      for (t1 = this.get$keys(), t2 = t1.length, t3 = this._html$_element, _i = 0; _i < t1.length; t1.length === t2 || (0, A.throwConcurrentModificationError)(t1), ++_i) {
+      for (t1 = this.get$keys(0), t2 = t1.length, t3 = this._html$_element, _i = 0; _i < t1.length; t1.length === t2 || (0, A.throwConcurrentModificationError)(t1), ++_i) {
         key = t1[_i];
         value = t3.getAttribute(key);
         f.call$2(key, value == null ? A._asString(value) : value);
       }
     },
-    get$keys() {
+    get$keys(_) {
       var keys, len, t2, i, attr, t3,
         t1 = this._html$_element.attributes;
       t1.toString;
@@ -5811,16 +6483,22 @@
       }
       return keys;
     },
+    get$isEmpty(_) {
+      return this.get$keys(0).length === 0;
+    },
     get$isNotEmpty(_) {
-      return this.get$keys().length !== 0;
+      return this.get$keys(0).length !== 0;
     }
   };
   A._ElementAttributeMap.prototype = {
     $index(_, key) {
       return this._html$_element.getAttribute(A._asString(key));
     },
+    $indexSet(_, key, value) {
+      this._html$_element.setAttribute(key, A._asString(value));
+    },
     get$length(_) {
-      return this.get$keys().length;
+      return this.get$keys(0).length;
     }
   };
   A.EventStreamProvider.prototype = {};
@@ -5831,7 +6509,7 @@
     call$1(e) {
       return this.onData.call$1(type$.Event._as(e));
     },
-    $signature: 16
+    $signature: 18
   };
   A._Html5NodeValidator.prototype = {
     _Html5NodeValidator$1$uriPolicy(uriPolicy) {
@@ -5874,13 +6552,13 @@
     call$1(v) {
       return type$.NodeValidator._as(v).allowsElement$1(this.element);
     },
-    $signature: 6
+    $signature: 8
   };
   A.NodeValidatorBuilder_allowsAttribute_closure.prototype = {
     call$1(v) {
       return type$.NodeValidator._as(v).allowsAttribute$3(this.element, this.attributeName, this.value);
     },
-    $signature: 6
+    $signature: 8
   };
   A._SimpleNodeValidator.prototype = {
     _SimpleNodeValidator$4$allowedAttributes$allowedElements$allowedUriAttributes(uriPolicy, allowedAttributes, allowedElements, allowedUriAttributes) {
@@ -5927,13 +6605,13 @@
     call$1(x) {
       return !B.JSArray_methods.contains$1(B.List_ql7, A._asString(x));
     },
-    $signature: 7
+    $signature: 9
   };
   A._SimpleNodeValidator_closure0.prototype = {
     call$1(x) {
       return B.JSArray_methods.contains$1(B.List_ql7, A._asString(x));
     },
-    $signature: 7
+    $signature: 9
   };
   A._TemplatingNodeValidator.prototype = {
     allowsAttribute$3(element, attributeName, value) {
@@ -5950,7 +6628,7 @@
     call$1(attr) {
       return "TEMPLATE::" + A._asString(attr);
     },
-    $signature: 17
+    $signature: 19
   };
   A._SvgNodeValidator.prototype = {
     allowsElement$1(element) {
@@ -6110,9 +6788,9 @@
             window.console.warn("Removing disallowed type extension <" + tag + ' is="' + isAttr + '">');
           return;
         }
-      t1 = attrs.get$keys();
+      t1 = attrs.get$keys(0);
       keys = A._setArrayType(t1.slice(0), A._arrayInstanceType(t1));
-      for (i = attrs.get$keys().length - 1, t1 = attrs._html$_element, t2 = "Removing disallowed attribute <" + tag + " "; i >= 0; --i) {
+      for (i = attrs.get$keys(0).length - 1, t1 = attrs._html$_element, t2 = "Removing disallowed attribute <" + tag + " "; i >= 0; --i) {
         if (!(i < keys.length))
           return A.ioore(keys, i);
         $name = keys[i];
@@ -6184,13 +6862,14 @@
         child = nextChild;
       }
     },
-    $signature: 18
+    $signature: 20
   };
   A._CssStyleDeclaration_JavaScriptObject_CssStyleDeclarationBase.prototype = {};
   A._HtmlCollection_JavaScriptObject_ListMixin.prototype = {};
   A._HtmlCollection_JavaScriptObject_ListMixin_ImmutableListMixin.prototype = {};
   A._NodeList_JavaScriptObject_ListMixin.prototype = {};
   A._NodeList_JavaScriptObject_ListMixin_ImmutableListMixin.prototype = {};
+  A._Storage_JavaScriptObject_MapMixin.prototype = {};
   A.__NamedNodeMap_JavaScriptObject_ListMixin.prototype = {};
   A.__NamedNodeMap_JavaScriptObject_ListMixin_ImmutableListMixin.prototype = {};
   A.ScriptElement0.prototype = {$isScriptElement0: 1};
@@ -6217,7 +6896,7 @@
   };
   A.main_closure.prototype = {
     call$1($event) {
-      var t2, taskTitleInput, taskDescriptionInput, addButton, taskList, t3, countSpan, emptyState, paginationContainer, tasks, updateList, updatePagination, t1 = {};
+      var t2, taskTitleInput, taskDescriptionInput, addButton, taskList, t3, countSpan, emptyState, paginationContainer, updateList, updatePagination, t1 = {};
       type$.Event._as($event);
       A.print("DOM carregado!");
       t2 = document;
@@ -6234,38 +6913,85 @@
         return;
       }
       A.print("Elementos encontrados!");
-      tasks = A._setArrayType([], type$.JSArray_Map_String_dynamic);
+      t1.tasks = A._setArrayType([], type$.JSArray_Map_String_dynamic);
       t1.editingIndex = -1;
       t1.currentPage = 1;
-      t2 = new A.main_closure_getTotalPages(tasks, 5);
+      t2 = new A.main_closure_saveTasksToStorage(t1);
+      t3 = new A.main_closure_getTotalPages(t1, 5);
       updateList = A._Cell$named("updateList");
       updatePagination = A._Cell$named("updatePagination");
-      updatePagination._value = new A.main__closure(t1, paginationContainer, t2, updateList);
-      updateList._value = new A.main__closure0(t1, tasks, taskList, emptyState, paginationContainer, t2, new A.main_closure_getCurrentPageTasks(t1, 5, tasks), 5, updateList, countSpan, updatePagination);
-      B.ButtonElement_methods.addEventListener$2(addButton, "click", new A.main__closure1(t1, taskTitleInput, taskDescriptionInput, tasks, t2, updateList));
+      updatePagination._value = new A.main__closure(t1, paginationContainer, t3, updateList);
+      updateList._value = new A.main__closure0(t1, taskList, emptyState, paginationContainer, t3, new A.main_closure_getCurrentPageTasks(t1, 5), 5, t2, updateList, countSpan, updatePagination);
+      B.ButtonElement_methods.addEventListener$2(addButton, "click", new A.main__closure1(t1, taskTitleInput, taskDescriptionInput, t3, t2, updateList));
       B.InputElement_methods.addEventListener$2(taskTitleInput, "keypress", new A.main__closure2(addButton));
+      new A.main_closure_loadTasksFromStorage(t1).call$0();
       updateList._readLocal$0().call$0();
       A.print("Aplica\xe7\xe3o inicializada com sucesso!");
     },
     $signature: 1
   };
+  A.main_closure_saveTasksToStorage.prototype = {
+    call$0() {
+      var tasksJson, e, t1, t2, exception;
+      try {
+        t1 = this._box_0;
+        tasksJson = B.C_JsonCodec.encode$2$toEncodable(t1.tasks, null);
+        t2 = window.localStorage;
+        t2.toString;
+        t2.setItem("todo_tasks", A._asString(tasksJson));
+        A.print("Tarefas salvas no localStorage: " + t1.tasks.length + " tarefas");
+      } catch (exception) {
+        e = A.unwrapException(exception);
+        A.print("Erro ao salvar tarefas: " + A.S(e));
+      }
+    },
+    $signature: 0
+  };
+  A.main_closure_loadTasksFromStorage.prototype = {
+    call$0() {
+      var tasksJson, tasksList, e, t1, tasks, exception;
+      try {
+        tasksJson = window.localStorage.getItem("todo_tasks");
+        if (tasksJson != null && tasksJson.length !== 0) {
+          tasksList = type$.List_dynamic._as(B.C_JsonCodec.decode$2$reviver(0, tasksJson, null));
+          t1 = J.map$1$1$ax(tasksList, new A.main__loadTasksFromStorage_closure(), type$.Map_String_dynamic);
+          tasks = A.List_List$_of(t1, t1.$ti._eval$1("ListIterable.E"));
+          this._box_0.tasks = tasks;
+          A.print("Tarefas carregadas do localStorage: " + tasks.length + " tarefas");
+        } else
+          A.print("Nenhuma tarefa encontrada no localStorage");
+      } catch (exception) {
+        e = A.unwrapException(exception);
+        A.print("Erro ao carregar tarefas: " + A.S(e));
+        this._box_0.tasks = A._setArrayType([], type$.JSArray_Map_String_dynamic);
+      }
+    },
+    $signature: 0
+  };
+  A.main__loadTasksFromStorage_closure.prototype = {
+    call$1(task) {
+      return A.LinkedHashMap_LinkedHashMap$from(type$.Map_dynamic_dynamic._as(task), type$.String, type$.dynamic);
+    },
+    $signature: 21
+  };
   A.main_closure_getTotalPages.prototype = {
     call$0() {
-      return B.JSNumber_methods.ceil$0(this.tasks.length / this.itemsPerPage);
+      return B.JSNumber_methods.ceil$0(this._box_0.tasks.length / this.itemsPerPage);
     },
-    $signature: 19
+    $signature: 22
   };
   A.main_closure_getCurrentPageTasks.prototype = {
     call$0() {
       var endIndex0,
-        t1 = this.itemsPerPage,
-        startIndex = (this._box_0.currentPage - 1) * t1,
-        endIndex = startIndex + t1;
-      t1 = this.tasks;
+        t1 = this._box_0,
+        t2 = this.itemsPerPage,
+        startIndex = (t1.currentPage - 1) * t2,
+        endIndex = startIndex + t2;
+      t1 = t1.tasks;
       endIndex0 = t1.length;
       return B.JSArray_methods.sublist$2(t1, startIndex, endIndex > endIndex0 ? endIndex0 : endIndex);
     },
-    $signature: 20
+    $signature: 23
   };
   A.main__closure.prototype = {
     call$0() {
@@ -6352,14 +7078,14 @@
   };
   A.main__closure0.prototype = {
     call$0() {
-      var t3, totalPages, currentPageTasks, t4, t5, t6, t7, t8, t9, i, task, globalIndex, t10, t11, checkbox, taskContent, editTitleInput, t12, editDescriptionInput, buttonGroup, taskTitle, taskDescription, pendingCount, _this = this, _s4_ = "none",
+      var t3, totalPages, currentPageTasks, t4, t5, t6, t7, t8, t9, i, task, globalIndex, t10, t11, t12, checkbox, taskContent, editTitleInput, t13, editDescriptionInput, buttonGroup, taskTitle, taskDescription, pendingCount, _this = this, _s4_ = "none",
         _s9_ = "completed",
         _s11_ = "description",
         _s12_ = "button-group",
         _s5_ = "click",
-        t1 = _this.tasks,
+        t1 = _this._box_0,
         t2 = _this.taskList;
-      if (t1.length === 0) {
+      if (t1.tasks.length === 0) {
         t2 = t2.style;
         t2.display = _s4_;
         t2 = _this.emptyState.style;
@@ -6372,35 +7098,35 @@
         t3 = _this.emptyState.style;
         t3.display = _s4_;
         totalPages = _this.getTotalPages.call$0();
-        t3 = _this._box_0;
-        if (t3.currentPage > totalPages && totalPages > 0)
-          t3.currentPage = totalPages;
+        if (t1.currentPage > totalPages && totalPages > 0)
+          t1.currentPage = totalPages;
         currentPageTasks = _this.getCurrentPageTasks.call$0();
         t2.children.toString;
         B.UListElement_methods._clearChildren$0(t2);
-        for (t4 = J.getInterceptor$asx(currentPageTasks), t5 = type$._ElementEventStreamImpl_MouseEvent, t6 = _this.updateList, t7 = t5._eval$1("~(1)?"), t5 = t5._precomputed1, t8 = type$.nullable_dynamic_Function_Event, t9 = _this.itemsPerPage, i = 0; i < t4.get$length(currentPageTasks); ++i) {
-          task = t4.$index(currentPageTasks, i);
-          globalIndex = (t3.currentPage - 1) * t9 + i;
+        for (t3 = J.getInterceptor$asx(currentPageTasks), t4 = type$._ElementEventStreamImpl_MouseEvent, t5 = _this.updateList, t6 = t4._eval$1("~(1)?"), t4 = t4._precomputed1, t7 = _this.saveTasksToStorage, t8 = type$.nullable_dynamic_Function_Event, t9 = _this.itemsPerPage, i = 0; i < t3.get$length(currentPageTasks); ++i) {
+          task = t3.$index(currentPageTasks, i);
+          globalIndex = (t1.currentPage - 1) * t9 + i;
           t10 = document;
           t11 = t10.createElement("li");
           t11.toString;
-          if (J.$eq$(task.$index(0, _s9_), true))
+          t12 = J.getInterceptor$asx(task);
+          if (J.$eq$(t12.$index(task, _s9_), true))
             t11.className = _s9_;
           checkbox = A.InputElement_InputElement();
           B.InputElement_methods.set$type(checkbox, "checkbox");
           checkbox.className = "task-checkbox";
-          B.InputElement_methods.set$checked(checkbox, J.$eq$(task.$index(0, _s9_), true));
-          B.InputElement_methods._addEventListener$3(checkbox, "change", t8._as(new A.main___closure(t1, globalIndex, checkbox, t6)), null);
+          B.InputElement_methods.set$checked(checkbox, J.$eq$(t12.$index(task, _s9_), true));
+          B.InputElement_methods._addEventListener$3(checkbox, "change", t8._as(new A.main___closure(t1, globalIndex, checkbox, t7, t5)), null);
           taskContent = t10.createElement("div");
           taskContent.className = "task-content";
-          if (t3.editingIndex === globalIndex) {
+          if (t1.editingIndex === globalIndex) {
             editTitleInput = A.InputElement_InputElement();
             editTitleInput.className = "edit-title-input";
-            t12 = task.$index(0, "title");
-            B.InputElement_methods.set$value(editTitleInput, A._asStringQ(t12 == null ? "" : t12));
+            t13 = t12.$index(task, "title");
+            B.InputElement_methods.set$value(editTitleInput, A._asStringQ(t13 == null ? "" : t13));
             editDescriptionInput = t10.createElement("textarea");
             editDescriptionInput.className = "edit-description-input";
-            t12 = task.$index(0, _s11_);
+            t12 = t12.$index(task, _s11_);
             B.TextAreaElement_methods.set$value(editDescriptionInput, A._asStringQ(t12 == null ? "" : t12));
             taskContent.appendChild(editTitleInput).toString;
             taskContent.appendChild(editDescriptionInput).toString;
@@ -6410,12 +7136,12 @@
             t12.toString;
             B.ButtonElement_methods.set$text(t12, "Salvar");
             t12.className = "save-btn";
-            A._EventStreamSubscription$(t12, _s5_, t7._as(new A.main___closure0(t3, editTitleInput, editDescriptionInput, t1, globalIndex, t6)), false, t5);
+            A._EventStreamSubscription$(t12, _s5_, t6._as(new A.main___closure0(t1, editTitleInput, editDescriptionInput, globalIndex, t7, t5)), false, t4);
             t10 = t10.createElement("button");
             t10.toString;
             B.ButtonElement_methods.set$text(t10, "Cancelar");
             t10.className = "cancel-btn";
-            A._EventStreamSubscription$(t10, _s5_, t7._as(new A.main___closure1(t3, t6)), false, t5);
+            A._EventStreamSubscription$(t10, _s5_, t6._as(new A.main___closure1(t1, t5)), false, t4);
             buttonGroup.appendChild(t12).toString;
             buttonGroup.appendChild(t10).toString;
             t11.appendChild(checkbox).toString;
@@ -6425,14 +7151,14 @@
           } else {
             taskTitle = t10.createElement("div");
             taskTitle.className = "task-title";
-            t12 = task.$index(0, "title");
-            B.DivElement_methods.set$text(taskTitle, A._asStringQ(t12 == null ? "" : t12));
+            t13 = t12.$index(task, "title");
+            B.DivElement_methods.set$text(taskTitle, A._asStringQ(t13 == null ? "" : t13));
             taskContent.appendChild(taskTitle).toString;
-            t12 = task.$index(0, _s11_);
-            if ((t12 == null ? null : J.get$isNotEmpty$asx(t12)) === true) {
+            t13 = t12.$index(task, _s11_);
+            if ((t13 == null ? null : J.get$isNotEmpty$asx(t13)) === true) {
               taskDescription = t10.createElement("div");
               taskDescription.className = "task-description";
-              t12 = task.$index(0, _s11_);
+              t12 = t12.$index(task, _s11_);
               B.DivElement_methods.set$text(taskDescription, A._asStringQ(t12 == null ? "" : t12));
               taskContent.appendChild(taskDescription).toString;
             }
@@ -6442,12 +7168,12 @@
             t12.toString;
             B.ButtonElement_methods.set$text(t12, "Editar");
             t12.className = "edit-btn";
-            A._EventStreamSubscription$(t12, _s5_, t7._as(new A.main___closure2(t3, globalIndex, t6)), false, t5);
+            A._EventStreamSubscription$(t12, _s5_, t6._as(new A.main___closure2(t1, globalIndex, t5)), false, t4);
             t10 = t10.createElement("button");
             t10.toString;
             B.ButtonElement_methods.set$text(t10, "Remover");
             t10.className = "remove-btn";
-            A._EventStreamSubscription$(t10, _s5_, t7._as(new A.main___closure3(t3, t1, globalIndex, t6)), false, t5);
+            A._EventStreamSubscription$(t10, _s5_, t6._as(new A.main___closure3(t1, globalIndex, t7, t5)), false, t4);
             buttonGroup.appendChild(t12).toString;
             buttonGroup.appendChild(t10).toString;
             t11.appendChild(checkbox).toString;
@@ -6457,6 +7183,7 @@
           t2.appendChild(t11).toString;
         }
       }
+      t1 = t1.tasks;
       t2 = A._arrayInstanceType(t1);
       pendingCount = new A.WhereIterable(t1, t2._eval$1("bool(1)")._as(new A.main___closure4()), t2._eval$1("WhereIterable<1>")).get$length(0);
       t2 = document;
@@ -6478,18 +7205,19 @@
     call$1($event) {
       var t1, t2, _this = this;
       type$.Event._as($event);
-      t1 = _this.tasks;
+      t1 = _this._box_0.tasks;
       t2 = _this.globalIndex;
       if (!(t2 >= 0 && t2 < t1.length))
         return A.ioore(t1, t2);
-      t1[t2].$indexSet(0, "completed", _this.checkbox.checked);
+      J.$indexSet$ax(t1[t2], "completed", _this.checkbox.checked);
+      _this.saveTasksToStorage.call$0();
       _this.updateList._readLocal$0().call$0();
     },
     $signature: 1
   };
   A.main___closure0.prototype = {
     call$1(_) {
-      var t1, newTitle, newDescription, t2, _this = this;
+      var t1, newTitle, newDescription, t2, t3, _this = this;
       type$.MouseEvent._as(_);
       t1 = _this.editTitleInput.value;
       newTitle = t1 == null ? null : B.JSString_methods.trim$0(t1);
@@ -6500,15 +7228,18 @@
       if (newDescription == null)
         newDescription = "";
       if (newTitle.length !== 0) {
-        t1 = _this.tasks;
-        t2 = _this.globalIndex;
-        if (!(t2 >= 0 && t2 < t1.length))
-          return A.ioore(t1, t2);
-        t1[t2].$indexSet(0, "title", newTitle);
-        if (!(t2 < t1.length))
-          return A.ioore(t1, t2);
-        t1[t2].$indexSet(0, "description", newDescription);
-        _this._box_0.editingIndex = -1;
+        t1 = _this._box_0;
+        t2 = t1.tasks;
+        t3 = _this.globalIndex;
+        if (!(t3 >= 0 && t3 < t2.length))
+          return A.ioore(t2, t3);
+        J.$indexSet$ax(t2[t3], "title", newTitle);
+        t2 = t1.tasks;
+        if (!(t3 < t2.length))
+          return A.ioore(t2, t3);
+        J.$indexSet$ax(t2[t3], "description", newDescription);
+        _this.saveTasksToStorage.call$0();
+        t1.editingIndex = -1;
         _this.updateList._readLocal$0().call$0();
       } else {
         t1 = window;
@@ -6538,27 +7269,28 @@
     call$1(_) {
       var t1, t2, t3, _this = this;
       type$.MouseEvent._as(_);
-      t1 = _this.tasks;
-      t2 = _this.globalIndex;
-      t1.$flags & 1 && A.throwUnsupportedOperation(t1, "removeAt", 1);
-      if (t2 < 0 || t2 >= t1.length)
-        A.throwExpression(A.RangeError$value(t2, null));
-      t1.splice(t2, 1)[0];
       t1 = _this._box_0;
-      t3 = t1.editingIndex;
-      if (t3 === t2)
+      t2 = t1.tasks;
+      t3 = _this.globalIndex;
+      t2.$flags & 1 && A.throwUnsupportedOperation(t2, "removeAt", 1);
+      if (t3 < 0 || t3 >= t2.length)
+        A.throwExpression(A.RangeError$value(t3, null));
+      t2.splice(t3, 1)[0];
+      _this.saveTasksToStorage.call$0();
+      t2 = t1.editingIndex;
+      if (t2 === t3)
         t1.editingIndex = -1;
-      else if (t3 > t2)
-        t1.editingIndex = t3 - 1;
+      else if (t2 > t3)
+        t1.editingIndex = t2 - 1;
       _this.updateList._readLocal$0().call$0();
     },
     $signature: 2
   };
   A.main___closure4.prototype = {
     call$1(task) {
-      return !J.$eq$(type$.Map_String_dynamic._as(task).$index(0, "completed"), true);
+      return !J.$eq$(J.$index$asx(type$.Map_String_dynamic._as(task), "completed"), true);
     },
-    $signature: 21
+    $signature: 24
   };
   A.main__closure1.prototype = {
     call$1($event) {
@@ -6582,14 +7314,15 @@
         description = "";
       A.print('Clicou no bot\xe3o! T\xedtulo: "' + title + '"');
       if (title.length !== 0) {
-        t4 = _this.tasks;
-        B.JSArray_methods.add$1(t4, A.LinkedHashMap_LinkedHashMap$_literal(["title", title, "description", description, "completed", false], type$.String, type$.dynamic));
+        t4 = _this._box_0;
+        B.JSArray_methods.add$1(t4.tasks, A.LinkedHashMap_LinkedHashMap$_literal(["title", title, "description", description, "completed", false], type$.String, type$.dynamic));
         B.InputElement_methods.set$value(t1, "");
         if (!t3)
           B.TextAreaElement_methods.set$value(t2, "");
-        _this._box_0.currentPage = _this.getTotalPages.call$0();
+        t4.currentPage = _this.getTotalPages.call$0();
+        _this.saveTasksToStorage.call$0();
         _this.updateList._readLocal$0().call$0();
-        A.print("Tarefa adicionada! Total: " + t4.length);
+        A.print("Tarefa adicionada! Total: " + t4.tasks.length);
       } else {
         A.print("T\xedtulo vazio!");
         t1 = window;
@@ -6634,34 +7367,39 @@
     _static_1(A, "async__AsyncRun__scheduleImmediateWithSetImmediate$closure", "_AsyncRun__scheduleImmediateWithSetImmediate", 3);
     _static_1(A, "async__AsyncRun__scheduleImmediateWithTimer$closure", "_AsyncRun__scheduleImmediateWithTimer", 3);
     _static_0(A, "async___startMicrotaskLoop$closure", "_startMicrotaskLoop", 0);
-    _static(A, "html__Html5NodeValidator__standardAttributeValidator$closure", 4, null, ["call$4"], ["_Html5NodeValidator__standardAttributeValidator"], 8, 0);
-    _static(A, "html__Html5NodeValidator__uriAttributeValidator$closure", 4, null, ["call$4"], ["_Html5NodeValidator__uriAttributeValidator"], 8, 0);
+    _static_1(A, "convert___defaultToEncodable$closure", "_defaultToEncodable", 4);
+    _static(A, "html__Html5NodeValidator__standardAttributeValidator$closure", 4, null, ["call$4"], ["_Html5NodeValidator__standardAttributeValidator"], 10, 0);
+    _static(A, "html__Html5NodeValidator__uriAttributeValidator$closure", 4, null, ["call$4"], ["_Html5NodeValidator__uriAttributeValidator"], 10, 0);
   })();
   (function inheritance() {
     var _mixin = hunkHelpers.mixin,
       _inherit = hunkHelpers.inherit,
       _inheritMany = hunkHelpers.inheritMany;
     _inherit(A.Object, null);
-    _inheritMany(A.Object, [A.JS_CONST, J.Interceptor, J.ArrayIterator, A.Error, A.Iterable, A.ListIterator, A.WhereIterator, A.TypeErrorDecoder, A.NullThrownFromJavaScriptException, A._StackTrace, A.Closure, A.MapBase, A.LinkedHashMapCell, A.LinkedHashMapKeyIterator, A._Cell, A.Rti, A._FunctionParameters, A._Type, A._TimerImpl, A.AsyncError, A._FutureListener, A._Future, A._AsyncCallbackEntry, A.Stream, A._Zone, A.SetBase, A._LinkedHashSetCell, A._LinkedHashSetIterator, A.ListBase, A.StackOverflowError, A._Exception, A.Null, A._StringStackTrace, A.StringBuffer, A.CssStyleDeclarationBase, A.EventStreamProvider, A._EventStreamSubscription, A._Html5NodeValidator, A.ImmutableListMixin, A.NodeValidatorBuilder, A._SimpleNodeValidator, A._SvgNodeValidator, A.FixedSizeListIterator, A._SameOriginUriPolicy, A._ValidatingTreeSanitizer]);
+    _inheritMany(A.Object, [A.JS_CONST, J.Interceptor, J.ArrayIterator, A.Error, A.Iterable, A.ListIterator, A.WhereIterator, A.TypeErrorDecoder, A.NullThrownFromJavaScriptException, A._StackTrace, A.Closure, A.MapBase, A.LinkedHashMapCell, A.LinkedHashMapKeyIterator, A._Cell, A.Rti, A._FunctionParameters, A._Type, A._TimerImpl, A.AsyncError, A._FutureListener, A._Future, A._AsyncCallbackEntry, A.Stream, A._Zone, A.SetBase, A._LinkedHashSetCell, A._LinkedHashSetIterator, A.ListBase, A.Codec, A.Converter, A._JsonStringifier, A.StackOverflowError, A._Exception, A.FormatException, A.Null, A._StringStackTrace, A.StringBuffer, A.CssStyleDeclarationBase, A.EventStreamProvider, A._EventStreamSubscription, A._Html5NodeValidator, A.ImmutableListMixin, A.NodeValidatorBuilder, A._SimpleNodeValidator, A._SvgNodeValidator, A.FixedSizeListIterator, A._SameOriginUriPolicy, A._ValidatingTreeSanitizer]);
     _inheritMany(J.Interceptor, [J.JSBool, J.JSNull, J.JavaScriptObject, J.JavaScriptBigInt, J.JavaScriptSymbol, J.JSNumber, J.JSString]);
-    _inheritMany(J.JavaScriptObject, [J.LegacyJavaScriptObject, J.JSArray, A.EventTarget, A._CssStyleDeclaration_JavaScriptObject_CssStyleDeclarationBase, A.DomException, A.DomImplementation, A.Event, A._HtmlCollection_JavaScriptObject_ListMixin, A.Location, A._NodeList_JavaScriptObject_ListMixin, A.__NamedNodeMap_JavaScriptObject_ListMixin]);
+    _inheritMany(J.JavaScriptObject, [J.LegacyJavaScriptObject, J.JSArray, A.EventTarget, A._CssStyleDeclaration_JavaScriptObject_CssStyleDeclarationBase, A.DomException, A.DomImplementation, A.Event, A._HtmlCollection_JavaScriptObject_ListMixin, A.Location, A._NodeList_JavaScriptObject_ListMixin, A._Storage_JavaScriptObject_MapMixin, A.__NamedNodeMap_JavaScriptObject_ListMixin]);
     _inheritMany(J.LegacyJavaScriptObject, [J.PlainJavaScriptObject, J.UnknownJavaScriptObject, J.JavaScriptFunction]);
     _inherit(J.JSUnmodifiableArray, J.JSArray);
     _inheritMany(J.JSNumber, [J.JSInt, J.JSNumNotInt]);
-    _inheritMany(A.Error, [A.LateError, A.TypeError, A.JsNoSuchMethodError, A.UnknownJsTypeError, A.RuntimeError, A._Error, A.AssertionError, A.ArgumentError, A.UnsupportedError, A.UnimplementedError, A.StateError, A.ConcurrentModificationError]);
+    _inheritMany(A.Error, [A.LateError, A.TypeError, A.JsNoSuchMethodError, A.UnknownJsTypeError, A.RuntimeError, A._Error, A.JsonUnsupportedObjectError, A.AssertionError, A.ArgumentError, A.UnsupportedError, A.UnimplementedError, A.StateError, A.ConcurrentModificationError]);
     _inheritMany(A.Iterable, [A.EfficientLengthIterable, A.WhereIterable]);
     _inheritMany(A.EfficientLengthIterable, [A.ListIterable, A.LinkedHashMapKeysIterable]);
-    _inherit(A.MappedListIterable, A.ListIterable);
+    _inheritMany(A.ListIterable, [A.MappedListIterable, A._JsonMapKeyIterable]);
     _inherit(A.NullError, A.TypeError);
-    _inheritMany(A.Closure, [A.Closure0Args, A.Closure2Args, A.TearOffClosure, A.initHooks_closure, A.initHooks_closure1, A._AsyncRun__initializeScheduleImmediate_internalCallback, A._AsyncRun__initializeScheduleImmediate_closure, A._Future__propagateToListeners_handleWhenCompleteCallback_closure, A.Stream_length_closure, A._RootZone_bindUnaryCallbackGuarded_closure, A.Element_Element$html_closure, A._EventStreamSubscription_closure, A.NodeValidatorBuilder_allowsElement_closure, A.NodeValidatorBuilder_allowsAttribute_closure, A._SimpleNodeValidator_closure, A._SimpleNodeValidator_closure0, A._TemplatingNodeValidator_closure, A.main_closure, A.main___closure5, A.main___closure6, A.main___closure7, A.main___closure, A.main___closure0, A.main___closure1, A.main___closure2, A.main___closure3, A.main___closure4, A.main__closure1, A.main__closure2]);
+    _inheritMany(A.Closure, [A.Closure0Args, A.Closure2Args, A.TearOffClosure, A.initHooks_closure, A.initHooks_closure1, A._AsyncRun__initializeScheduleImmediate_internalCallback, A._AsyncRun__initializeScheduleImmediate_closure, A._Future__propagateToListeners_handleWhenCompleteCallback_closure, A.Stream_length_closure, A._RootZone_bindUnaryCallbackGuarded_closure, A.Element_Element$html_closure, A._EventStreamSubscription_closure, A.NodeValidatorBuilder_allowsElement_closure, A.NodeValidatorBuilder_allowsAttribute_closure, A._SimpleNodeValidator_closure, A._SimpleNodeValidator_closure0, A._TemplatingNodeValidator_closure, A.main_closure, A.main__loadTasksFromStorage_closure, A.main___closure5, A.main___closure6, A.main___closure7, A.main___closure, A.main___closure0, A.main___closure1, A.main___closure2, A.main___closure3, A.main___closure4, A.main__closure1, A.main__closure2]);
     _inheritMany(A.TearOffClosure, [A.StaticClosure, A.BoundClosure]);
-    _inheritMany(A.MapBase, [A.JsLinkedHashMap, A._AttributeMap]);
-    _inheritMany(A.Closure2Args, [A.initHooks_closure0, A._Future__propagateToListeners_handleWhenCompleteCallback_closure0, A.MapBase_mapToString_closure, A._ValidatingTreeSanitizer_sanitizeTree_walk]);
+    _inheritMany(A.MapBase, [A.JsLinkedHashMap, A._JsonMap, A._AttributeMap]);
+    _inheritMany(A.Closure2Args, [A.initHooks_closure0, A._Future__propagateToListeners_handleWhenCompleteCallback_closure0, A.LinkedHashMap_LinkedHashMap$from_closure, A.MapBase_mapToString_closure, A._JsonStringifier_writeMap_closure, A.Storage_keys_closure, A._ValidatingTreeSanitizer_sanitizeTree_walk]);
     _inherit(A._TypeError, A._Error);
-    _inheritMany(A.Closure0Args, [A._AsyncRun__scheduleImmediateJsOverride_internalCallback, A._AsyncRun__scheduleImmediateWithSetImmediate_internalCallback, A._TimerImpl_internalCallback, A._Future__addListener_closure, A._Future__prependListeners_closure, A._Future__asyncCompleteErrorObject_closure, A._Future__propagateToListeners_handleWhenCompleteCallback, A._Future__propagateToListeners_handleValueCallback, A._Future__propagateToListeners_handleError, A.Stream_length_closure0, A._rootHandleError_closure, A._RootZone_bindCallbackGuarded_closure, A.main_closure_getTotalPages, A.main_closure_getCurrentPageTasks, A.main__closure, A.main__closure0]);
+    _inheritMany(A.Closure0Args, [A._AsyncRun__scheduleImmediateJsOverride_internalCallback, A._AsyncRun__scheduleImmediateWithSetImmediate_internalCallback, A._TimerImpl_internalCallback, A._Future__addListener_closure, A._Future__prependListeners_closure, A._Future__asyncCompleteErrorObject_closure, A._Future__propagateToListeners_handleWhenCompleteCallback, A._Future__propagateToListeners_handleValueCallback, A._Future__propagateToListeners_handleError, A.Stream_length_closure0, A._rootHandleError_closure, A._RootZone_bindCallbackGuarded_closure, A.main_closure_saveTasksToStorage, A.main_closure_loadTasksFromStorage, A.main_closure_getTotalPages, A.main_closure_getCurrentPageTasks, A.main__closure, A.main__closure0]);
     _inherit(A._RootZone, A._Zone);
     _inherit(A._SetBase, A.SetBase);
     _inherit(A._LinkedHashSet, A._SetBase);
+    _inherit(A.JsonCyclicError, A.JsonUnsupportedObjectError);
+    _inherit(A.JsonCodec, A.Codec);
+    _inheritMany(A.Converter, [A.JsonEncoder, A.JsonDecoder]);
+    _inherit(A._JsonStringStringifier, A._JsonStringifier);
     _inheritMany(A.ArgumentError, [A.RangeError, A.IndexError]);
     _inheritMany(A.EventTarget, [A.Node, A.Window]);
     _inheritMany(A.Node, [A.Element, A.CharacterData, A.Document, A._Attr]);
@@ -6676,6 +7414,7 @@
     _inherit(A._ChildNodeListLazy, A.ListBase);
     _inherit(A._NodeList_JavaScriptObject_ListMixin_ImmutableListMixin, A._NodeList_JavaScriptObject_ListMixin);
     _inherit(A.NodeList, A._NodeList_JavaScriptObject_ListMixin_ImmutableListMixin);
+    _inherit(A.Storage, A._Storage_JavaScriptObject_MapMixin);
     _inherit(A.__NamedNodeMap_JavaScriptObject_ListMixin_ImmutableListMixin, A.__NamedNodeMap_JavaScriptObject_ListMixin);
     _inherit(A._NamedNodeMap, A.__NamedNodeMap_JavaScriptObject_ListMixin_ImmutableListMixin);
     _inherit(A._ElementAttributeMap, A._AttributeMap);
@@ -6688,6 +7427,7 @@
     _mixin(A._HtmlCollection_JavaScriptObject_ListMixin_ImmutableListMixin, A.ImmutableListMixin);
     _mixin(A._NodeList_JavaScriptObject_ListMixin, A.ListBase);
     _mixin(A._NodeList_JavaScriptObject_ListMixin_ImmutableListMixin, A.ImmutableListMixin);
+    _mixin(A._Storage_JavaScriptObject_MapMixin, A.MapBase);
     _mixin(A.__NamedNodeMap_JavaScriptObject_ListMixin, A.ListBase);
     _mixin(A.__NamedNodeMap_JavaScriptObject_ListMixin_ImmutableListMixin, A.ImmutableListMixin);
   })();
@@ -6696,13 +7436,13 @@
     typeUniverse: {eC: new Map(), tR: {}, eT: {}, tPV: {}, sEA: []},
     mangledGlobalNames: {int: "int", double: "double", num: "num", String: "String", bool: "bool", Null: "Null", List: "List", Object: "Object", Map: "Map"},
     mangledNames: {},
-    types: ["~()", "Null(Event)", "~(MouseEvent)", "~(~())", "Null(@)", "Null()", "bool(NodeValidator)", "bool(String)", "bool(Element,String,String,_Html5NodeValidator)", "@(@)", "@(@,String)", "@(String)", "Null(~())", "Null(Object,StackTrace)", "~(Object?,Object?)", "bool(Node)", "~(Event)", "String(String)", "~(Node,Node?)", "int()", "List<Map<String,@>>()", "bool(Map<String,@>)"],
+    types: ["~()", "Null(Event)", "~(MouseEvent)", "~(~())", "@(@)", "Null(@)", "Null()", "~(Object?,Object?)", "bool(NodeValidator)", "bool(String)", "bool(Element,String,String,_Html5NodeValidator)", "@(@,String)", "@(String)", "Null(~())", "Null(Object,StackTrace)", "~(@,@)", "bool(Node)", "~(String,String)", "~(Event)", "String(String)", "~(Node,Node?)", "Map<String,@>(@)", "int()", "List<Map<String,@>>()", "bool(Map<String,@>)"],
     interceptorsByTag: null,
     leafTags: null,
     arrayRti: Symbol("$ti")
   };
-  A._Universe_addRules(init.typeUniverse, JSON.parse('{"PlainJavaScriptObject":"LegacyJavaScriptObject","UnknownJavaScriptObject":"LegacyJavaScriptObject","JavaScriptFunction":"LegacyJavaScriptObject","AbortPaymentEvent":"Event","ExtendableEvent":"Event","AElement":"SvgElement","GraphicsElement":"SvgElement","AudioElement":"HtmlElement","MediaElement":"HtmlElement","ShadowRoot":"Node","DocumentFragment":"Node","XmlDocument":"Document","PointerEvent":"MouseEvent","CompositionEvent":"UIEvent","CDataSection":"CharacterData","Text":"CharacterData","MathMLElement":"Element","HtmlFormControlsCollection":"HtmlCollection","JSBool":{"bool":[],"TrustedGetRuntimeType":[]},"JSNull":{"TrustedGetRuntimeType":[]},"JSArray":{"List":["1"],"Iterable":["1"]},"JSUnmodifiableArray":{"JSArray":["1"],"List":["1"],"Iterable":["1"]},"ArrayIterator":{"Iterator":["1"]},"JSNumber":{"num":[]},"JSInt":{"int":[],"num":[],"TrustedGetRuntimeType":[]},"JSNumNotInt":{"num":[],"TrustedGetRuntimeType":[]},"JSString":{"String":[],"Pattern":[],"TrustedGetRuntimeType":[]},"LateError":{"Error":[]},"EfficientLengthIterable":{"Iterable":["1"]},"ListIterable":{"Iterable":["1"]},"ListIterator":{"Iterator":["1"]},"MappedListIterable":{"ListIterable":["2"],"Iterable":["2"],"ListIterable.E":"2","Iterable.E":"2"},"WhereIterable":{"Iterable":["1"],"Iterable.E":"1"},"WhereIterator":{"Iterator":["1"]},"NullError":{"TypeError":[],"Error":[]},"JsNoSuchMethodError":{"Error":[]},"UnknownJsTypeError":{"Error":[]},"_StackTrace":{"StackTrace":[]},"Closure":{"Function":[]},"Closure0Args":{"Function":[]},"Closure2Args":{"Function":[]},"TearOffClosure":{"Function":[]},"StaticClosure":{"Function":[]},"BoundClosure":{"Function":[]},"RuntimeError":{"Error":[]},"JsLinkedHashMap":{"MapBase":["1","2"],"LinkedHashMap":["1","2"],"Map":["1","2"],"MapBase.K":"1","MapBase.V":"2"},"LinkedHashMapKeysIterable":{"Iterable":["1"],"Iterable.E":"1"},"LinkedHashMapKeyIterator":{"Iterator":["1"]},"_Error":{"Error":[]},"_TypeError":{"TypeError":[],"Error":[]},"AsyncError":{"Error":[]},"_Future":{"Future":["1"]},"_Zone":{"Zone":[]},"_RootZone":{"_Zone":[],"Zone":[]},"_LinkedHashSet":{"SetBase":["1"],"Set":["1"],"Iterable":["1"]},"_LinkedHashSetIterator":{"Iterator":["1"]},"ListBase":{"List":["1"],"Iterable":["1"]},"MapBase":{"Map":["1","2"]},"SetBase":{"Set":["1"],"Iterable":["1"]},"_SetBase":{"SetBase":["1"],"Set":["1"],"Iterable":["1"]},"int":{"num":[]},"List":{"Iterable":["1"]},"String":{"Pattern":[]},"AssertionError":{"Error":[]},"TypeError":{"Error":[]},"ArgumentError":{"Error":[]},"RangeError":{"Error":[]},"IndexError":{"Error":[]},"UnsupportedError":{"Error":[]},"UnimplementedError":{"Error":[]},"StateError":{"Error":[]},"ConcurrentModificationError":{"Error":[]},"StackOverflowError":{"Error":[]},"_StringStackTrace":{"StackTrace":[]},"Element":{"Node":[],"EventTarget":[]},"MouseEvent":{"Event":[]},"Node":{"EventTarget":[]},"_Html5NodeValidator":{"NodeValidator":[]},"HtmlElement":{"Element":[],"Node":[],"EventTarget":[]},"AnchorElement":{"Element":[],"Node":[],"EventTarget":[]},"AreaElement":{"Element":[],"Node":[],"EventTarget":[]},"BaseElement":{"Element":[],"Node":[],"EventTarget":[]},"BodyElement":{"Element":[],"Node":[],"EventTarget":[]},"ButtonElement":{"Element":[],"Node":[],"EventTarget":[]},"CharacterData":{"Node":[],"EventTarget":[]},"DivElement":{"Element":[],"Node":[],"EventTarget":[]},"Document":{"Node":[],"EventTarget":[]},"FormElement":{"Element":[],"Node":[],"EventTarget":[]},"HtmlCollection":{"ListBase":["Node"],"ImmutableListMixin":["Node"],"List":["Node"],"JavaScriptIndexingBehavior":["Node"],"Iterable":["Node"],"ListBase.E":"Node","ImmutableListMixin.E":"Node"},"HtmlDocument":{"Node":[],"EventTarget":[]},"InputElement":{"Element":[],"Node":[],"EventTarget":[]},"KeyboardEvent":{"Event":[]},"_ChildNodeListLazy":{"ListBase":["Node"],"List":["Node"],"Iterable":["Node"],"ListBase.E":"Node"},"NodeList":{"ListBase":["Node"],"ImmutableListMixin":["Node"],"List":["Node"],"JavaScriptIndexingBehavior":["Node"],"Iterable":["Node"],"ListBase.E":"Node","ImmutableListMixin.E":"Node"},"SelectElement":{"Element":[],"Node":[],"EventTarget":[]},"SpanElement":{"Element":[],"Node":[],"EventTarget":[]},"TableElement":{"Element":[],"Node":[],"EventTarget":[]},"TableRowElement":{"Element":[],"Node":[],"EventTarget":[]},"TableSectionElement":{"Element":[],"Node":[],"EventTarget":[]},"TemplateElement":{"Element":[],"Node":[],"EventTarget":[]},"TextAreaElement":{"Element":[],"Node":[],"EventTarget":[]},"UIEvent":{"Event":[]},"UListElement":{"Element":[],"Node":[],"EventTarget":[]},"Window":{"EventTarget":[]},"_Attr":{"Node":[],"EventTarget":[]},"_NamedNodeMap":{"ListBase":["Node"],"ImmutableListMixin":["Node"],"List":["Node"],"JavaScriptIndexingBehavior":["Node"],"Iterable":["Node"],"ListBase.E":"Node","ImmutableListMixin.E":"Node"},"_AttributeMap":{"MapBase":["String","String"],"Map":["String","String"]},"_ElementAttributeMap":{"MapBase":["String","String"],"Map":["String","String"],"MapBase.K":"String","MapBase.V":"String"},"_EventStream":{"Stream":["1"]},"_ElementEventStreamImpl":{"_EventStream":["1"],"Stream":["1"]},"NodeValidatorBuilder":{"NodeValidator":[]},"_SimpleNodeValidator":{"NodeValidator":[]},"_TemplatingNodeValidator":{"NodeValidator":[]},"_SvgNodeValidator":{"NodeValidator":[]},"FixedSizeListIterator":{"Iterator":["1"]},"_SameOriginUriPolicy":{"UriPolicy":[]},"_ValidatingTreeSanitizer":{"NodeTreeSanitizer":[]},"ScriptElement0":{"SvgElement":[],"Element":[],"Node":[],"EventTarget":[]},"SvgElement":{"Element":[],"Node":[],"EventTarget":[]}}'));
-  A._Universe_addErasedTypes(init.typeUniverse, JSON.parse('{"EfficientLengthIterable":1,"_SetBase":1}'));
+  A._Universe_addRules(init.typeUniverse, JSON.parse('{"PlainJavaScriptObject":"LegacyJavaScriptObject","UnknownJavaScriptObject":"LegacyJavaScriptObject","JavaScriptFunction":"LegacyJavaScriptObject","AbortPaymentEvent":"Event","ExtendableEvent":"Event","AElement":"SvgElement","GraphicsElement":"SvgElement","AudioElement":"HtmlElement","MediaElement":"HtmlElement","ShadowRoot":"Node","DocumentFragment":"Node","XmlDocument":"Document","PointerEvent":"MouseEvent","CompositionEvent":"UIEvent","CDataSection":"CharacterData","Text":"CharacterData","MathMLElement":"Element","HtmlFormControlsCollection":"HtmlCollection","JSBool":{"bool":[],"TrustedGetRuntimeType":[]},"JSNull":{"TrustedGetRuntimeType":[]},"JSArray":{"List":["1"],"Iterable":["1"]},"JSUnmodifiableArray":{"JSArray":["1"],"List":["1"],"Iterable":["1"]},"ArrayIterator":{"Iterator":["1"]},"JSNumber":{"num":[]},"JSInt":{"int":[],"num":[],"TrustedGetRuntimeType":[]},"JSNumNotInt":{"num":[],"TrustedGetRuntimeType":[]},"JSString":{"String":[],"Pattern":[],"TrustedGetRuntimeType":[]},"LateError":{"Error":[]},"EfficientLengthIterable":{"Iterable":["1"]},"ListIterable":{"Iterable":["1"]},"ListIterator":{"Iterator":["1"]},"MappedListIterable":{"ListIterable":["2"],"Iterable":["2"],"ListIterable.E":"2","Iterable.E":"2"},"WhereIterable":{"Iterable":["1"],"Iterable.E":"1"},"WhereIterator":{"Iterator":["1"]},"NullError":{"TypeError":[],"Error":[]},"JsNoSuchMethodError":{"Error":[]},"UnknownJsTypeError":{"Error":[]},"_StackTrace":{"StackTrace":[]},"Closure":{"Function":[]},"Closure0Args":{"Function":[]},"Closure2Args":{"Function":[]},"TearOffClosure":{"Function":[]},"StaticClosure":{"Function":[]},"BoundClosure":{"Function":[]},"RuntimeError":{"Error":[]},"JsLinkedHashMap":{"MapBase":["1","2"],"LinkedHashMap":["1","2"],"Map":["1","2"],"MapBase.K":"1","MapBase.V":"2"},"LinkedHashMapKeysIterable":{"Iterable":["1"],"Iterable.E":"1"},"LinkedHashMapKeyIterator":{"Iterator":["1"]},"_Error":{"Error":[]},"_TypeError":{"TypeError":[],"Error":[]},"AsyncError":{"Error":[]},"_Future":{"Future":["1"]},"_Zone":{"Zone":[]},"_RootZone":{"_Zone":[],"Zone":[]},"_LinkedHashSet":{"SetBase":["1"],"Set":["1"],"Iterable":["1"]},"_LinkedHashSetIterator":{"Iterator":["1"]},"ListBase":{"List":["1"],"Iterable":["1"]},"MapBase":{"Map":["1","2"]},"SetBase":{"Set":["1"],"Iterable":["1"]},"_SetBase":{"SetBase":["1"],"Set":["1"],"Iterable":["1"]},"_JsonMap":{"MapBase":["String","@"],"Map":["String","@"],"MapBase.K":"String","MapBase.V":"@"},"_JsonMapKeyIterable":{"ListIterable":["String"],"Iterable":["String"],"ListIterable.E":"String","Iterable.E":"String"},"JsonUnsupportedObjectError":{"Error":[]},"JsonCyclicError":{"Error":[]},"int":{"num":[]},"List":{"Iterable":["1"]},"String":{"Pattern":[]},"AssertionError":{"Error":[]},"TypeError":{"Error":[]},"ArgumentError":{"Error":[]},"RangeError":{"Error":[]},"IndexError":{"Error":[]},"UnsupportedError":{"Error":[]},"UnimplementedError":{"Error":[]},"StateError":{"Error":[]},"ConcurrentModificationError":{"Error":[]},"StackOverflowError":{"Error":[]},"_StringStackTrace":{"StackTrace":[]},"StringBuffer":{"StringSink":[]},"Element":{"Node":[],"EventTarget":[]},"MouseEvent":{"Event":[]},"Node":{"EventTarget":[]},"_Html5NodeValidator":{"NodeValidator":[]},"HtmlElement":{"Element":[],"Node":[],"EventTarget":[]},"AnchorElement":{"Element":[],"Node":[],"EventTarget":[]},"AreaElement":{"Element":[],"Node":[],"EventTarget":[]},"BaseElement":{"Element":[],"Node":[],"EventTarget":[]},"BodyElement":{"Element":[],"Node":[],"EventTarget":[]},"ButtonElement":{"Element":[],"Node":[],"EventTarget":[]},"CharacterData":{"Node":[],"EventTarget":[]},"DivElement":{"Element":[],"Node":[],"EventTarget":[]},"Document":{"Node":[],"EventTarget":[]},"FormElement":{"Element":[],"Node":[],"EventTarget":[]},"HtmlCollection":{"ListBase":["Node"],"ImmutableListMixin":["Node"],"List":["Node"],"JavaScriptIndexingBehavior":["Node"],"Iterable":["Node"],"ListBase.E":"Node","ImmutableListMixin.E":"Node"},"HtmlDocument":{"Node":[],"EventTarget":[]},"InputElement":{"Element":[],"Node":[],"EventTarget":[]},"KeyboardEvent":{"Event":[]},"_ChildNodeListLazy":{"ListBase":["Node"],"List":["Node"],"Iterable":["Node"],"ListBase.E":"Node"},"NodeList":{"ListBase":["Node"],"ImmutableListMixin":["Node"],"List":["Node"],"JavaScriptIndexingBehavior":["Node"],"Iterable":["Node"],"ListBase.E":"Node","ImmutableListMixin.E":"Node"},"SelectElement":{"Element":[],"Node":[],"EventTarget":[]},"SpanElement":{"Element":[],"Node":[],"EventTarget":[]},"Storage":{"MapBase":["String","String"],"Map":["String","String"],"MapBase.K":"String","MapBase.V":"String"},"TableElement":{"Element":[],"Node":[],"EventTarget":[]},"TableRowElement":{"Element":[],"Node":[],"EventTarget":[]},"TableSectionElement":{"Element":[],"Node":[],"EventTarget":[]},"TemplateElement":{"Element":[],"Node":[],"EventTarget":[]},"TextAreaElement":{"Element":[],"Node":[],"EventTarget":[]},"UIEvent":{"Event":[]},"UListElement":{"Element":[],"Node":[],"EventTarget":[]},"Window":{"EventTarget":[]},"_Attr":{"Node":[],"EventTarget":[]},"_NamedNodeMap":{"ListBase":["Node"],"ImmutableListMixin":["Node"],"List":["Node"],"JavaScriptIndexingBehavior":["Node"],"Iterable":["Node"],"ListBase.E":"Node","ImmutableListMixin.E":"Node"},"_AttributeMap":{"MapBase":["String","String"],"Map":["String","String"]},"_ElementAttributeMap":{"MapBase":["String","String"],"Map":["String","String"],"MapBase.K":"String","MapBase.V":"String"},"_EventStream":{"Stream":["1"]},"_ElementEventStreamImpl":{"_EventStream":["1"],"Stream":["1"]},"NodeValidatorBuilder":{"NodeValidator":[]},"_SimpleNodeValidator":{"NodeValidator":[]},"_TemplatingNodeValidator":{"NodeValidator":[]},"_SvgNodeValidator":{"NodeValidator":[]},"FixedSizeListIterator":{"Iterator":["1"]},"_SameOriginUriPolicy":{"UriPolicy":[]},"_ValidatingTreeSanitizer":{"NodeTreeSanitizer":[]},"ScriptElement0":{"SvgElement":[],"Element":[],"Node":[],"EventTarget":[]},"SvgElement":{"Element":[],"Node":[],"EventTarget":[]}}'));
+  A._Universe_addErasedTypes(init.typeUniverse, JSON.parse('{"EfficientLengthIterable":1,"_SetBase":1,"Codec":2,"Converter":2}'));
   var string$ = {
     Error_: "Error handler must accept one Object or one Object and a StackTrace as arguments, and return a value of the returned future's type",
     Por_fa: "Por favor, insira um t\xedtulo para a tarefa."
@@ -6766,6 +7506,7 @@
       nullable_DivElement: findType("DivElement?"),
       nullable_Future_Null: findType("Future<Null>?"),
       nullable_InputElement: findType("InputElement?"),
+      nullable_List_dynamic: findType("List<@>?"),
       nullable_Object: findType("Object?"),
       nullable_String: findType("String?"),
       nullable_TextAreaElement: findType("TextAreaElement?"),
@@ -6781,7 +7522,8 @@
       num: findType("num"),
       void: findType("~"),
       void_Function: findType("~()"),
-      void_Function_String_String: findType("~(String,String)")
+      void_Function_String_String: findType("~(String,String)"),
+      void_Function_String_dynamic: findType("~(String,@)")
     };
   })();
   (function constants() {
@@ -6932,8 +7674,11 @@
 };
     B.C_JS_CONST3 = function(hooks) { return hooks; }
 ;
+    B.C_JsonCodec = new A.JsonCodec();
     B.C__RootZone = new A._RootZone();
     B.C__StringStackTrace = new A._StringStackTrace();
+    B.JsonDecoder_null = new A.JsonDecoder(null);
+    B.JsonEncoder_null = new A.JsonEncoder(null);
     B.List_empty = A._setArrayType(makeConstList([]), type$.JSArray_String);
     B.List_pgZ = A._setArrayType(makeConstList(["bind", "if", "ref", "repeat", "syntax"]), type$.JSArray_String);
     B.List_ql7 = A._setArrayType(makeConstList(["A::href", "AREA::href", "BLOCKQUOTE::cite", "BODY::background", "COMMAND::icon", "DEL::cite", "FORM::action", "IMG::src", "INPUT::src", "INS::cite", "Q::cite", "VIDEO::poster"]), type$.JSArray_String);
@@ -7036,8 +7781,8 @@
       }
       init.dispatchPropertyName = init.getIsolateTag("dispatch_record");
     }();
-    hunkHelpers.setOrUpdateInterceptorsByTag({DOMError: J.JavaScriptObject, MediaError: J.JavaScriptObject, Navigator: J.JavaScriptObject, NavigatorConcurrentHardware: J.JavaScriptObject, NavigatorUserMediaError: J.JavaScriptObject, OverconstrainedError: J.JavaScriptObject, PositionError: J.JavaScriptObject, GeolocationPositionError: J.JavaScriptObject, Range: J.JavaScriptObject, HTMLAudioElement: A.HtmlElement, HTMLBRElement: A.HtmlElement, HTMLCanvasElement: A.HtmlElement, HTMLContentElement: A.HtmlElement, HTMLDListElement: A.HtmlElement, HTMLDataElement: A.HtmlElement, HTMLDataListElement: A.HtmlElement, HTMLDetailsElement: A.HtmlElement, HTMLDialogElement: A.HtmlElement, HTMLEmbedElement: A.HtmlElement, HTMLFieldSetElement: A.HtmlElement, HTMLHRElement: A.HtmlElement, HTMLHeadElement: A.HtmlElement, HTMLHeadingElement: A.HtmlElement, HTMLHtmlElement: A.HtmlElement, HTMLIFrameElement: A.HtmlElement, HTMLImageElement: A.HtmlElement, HTMLLIElement: A.HtmlElement, HTMLLabelElement: A.HtmlElement, HTMLLegendElement: A.HtmlElement, HTMLLinkElement: A.HtmlElement, HTMLMapElement: A.HtmlElement, HTMLMediaElement: A.HtmlElement, HTMLMenuElement: A.HtmlElement, HTMLMetaElement: A.HtmlElement, HTMLMeterElement: A.HtmlElement, HTMLModElement: A.HtmlElement, HTMLOListElement: A.HtmlElement, HTMLObjectElement: A.HtmlElement, HTMLOptGroupElement: A.HtmlElement, HTMLOptionElement: A.HtmlElement, HTMLOutputElement: A.HtmlElement, HTMLParagraphElement: A.HtmlElement, HTMLParamElement: A.HtmlElement, HTMLPictureElement: A.HtmlElement, HTMLPreElement: A.HtmlElement, HTMLProgressElement: A.HtmlElement, HTMLQuoteElement: A.HtmlElement, HTMLScriptElement: A.HtmlElement, HTMLShadowElement: A.HtmlElement, HTMLSlotElement: A.HtmlElement, HTMLSourceElement: A.HtmlElement, HTMLStyleElement: A.HtmlElement, HTMLTableCaptionElement: A.HtmlElement, HTMLTableCellElement: A.HtmlElement, HTMLTableDataCellElement: A.HtmlElement, HTMLTableHeaderCellElement: A.HtmlElement, HTMLTableColElement: A.HtmlElement, HTMLTimeElement: A.HtmlElement, HTMLTitleElement: A.HtmlElement, HTMLTrackElement: A.HtmlElement, HTMLUnknownElement: A.HtmlElement, HTMLVideoElement: A.HtmlElement, HTMLDirectoryElement: A.HtmlElement, HTMLFontElement: A.HtmlElement, HTMLFrameElement: A.HtmlElement, HTMLFrameSetElement: A.HtmlElement, HTMLMarqueeElement: A.HtmlElement, HTMLElement: A.HtmlElement, HTMLAnchorElement: A.AnchorElement, HTMLAreaElement: A.AreaElement, HTMLBaseElement: A.BaseElement, HTMLBodyElement: A.BodyElement, HTMLButtonElement: A.ButtonElement, CDATASection: A.CharacterData, CharacterData: A.CharacterData, Comment: A.CharacterData, ProcessingInstruction: A.CharacterData, Text: A.CharacterData, CSSStyleDeclaration: A.CssStyleDeclaration, MSStyleCSSProperties: A.CssStyleDeclaration, CSS2Properties: A.CssStyleDeclaration, HTMLDivElement: A.DivElement, XMLDocument: A.Document, Document: A.Document, DOMException: A.DomException, DOMImplementation: A.DomImplementation, MathMLElement: A.Element, Element: A.Element, AbortPaymentEvent: A.Event, AnimationEvent: A.Event, AnimationPlaybackEvent: A.Event, ApplicationCacheErrorEvent: A.Event, BackgroundFetchClickEvent: A.Event, BackgroundFetchEvent: A.Event, BackgroundFetchFailEvent: A.Event, BackgroundFetchedEvent: A.Event, BeforeInstallPromptEvent: A.Event, BeforeUnloadEvent: A.Event, BlobEvent: A.Event, CanMakePaymentEvent: A.Event, ClipboardEvent: A.Event, CloseEvent: A.Event, CustomEvent: A.Event, DeviceMotionEvent: A.Event, DeviceOrientationEvent: A.Event, ErrorEvent: A.Event, ExtendableEvent: A.Event, ExtendableMessageEvent: A.Event, FetchEvent: A.Event, FontFaceSetLoadEvent: A.Event, ForeignFetchEvent: A.Event, GamepadEvent: A.Event, HashChangeEvent: A.Event, InstallEvent: A.Event, MediaEncryptedEvent: A.Event, MediaKeyMessageEvent: A.Event, MediaQueryListEvent: A.Event, MediaStreamEvent: A.Event, MediaStreamTrackEvent: A.Event, MessageEvent: A.Event, MIDIConnectionEvent: A.Event, MIDIMessageEvent: A.Event, MutationEvent: A.Event, NotificationEvent: A.Event, PageTransitionEvent: A.Event, PaymentRequestEvent: A.Event, PaymentRequestUpdateEvent: A.Event, PopStateEvent: A.Event, PresentationConnectionAvailableEvent: A.Event, PresentationConnectionCloseEvent: A.Event, ProgressEvent: A.Event, PromiseRejectionEvent: A.Event, PushEvent: A.Event, RTCDataChannelEvent: A.Event, RTCDTMFToneChangeEvent: A.Event, RTCPeerConnectionIceEvent: A.Event, RTCTrackEvent: A.Event, SecurityPolicyViolationEvent: A.Event, SensorErrorEvent: A.Event, SpeechRecognitionError: A.Event, SpeechRecognitionEvent: A.Event, SpeechSynthesisEvent: A.Event, StorageEvent: A.Event, SyncEvent: A.Event, TrackEvent: A.Event, TransitionEvent: A.Event, WebKitTransitionEvent: A.Event, VRDeviceEvent: A.Event, VRDisplayEvent: A.Event, VRSessionEvent: A.Event, MojoInterfaceRequestEvent: A.Event, ResourceProgressEvent: A.Event, USBConnectionEvent: A.Event, IDBVersionChangeEvent: A.Event, AudioProcessingEvent: A.Event, OfflineAudioCompletionEvent: A.Event, WebGLContextEvent: A.Event, Event: A.Event, InputEvent: A.Event, SubmitEvent: A.Event, EventTarget: A.EventTarget, HTMLFormElement: A.FormElement, HTMLCollection: A.HtmlCollection, HTMLFormControlsCollection: A.HtmlCollection, HTMLOptionsCollection: A.HtmlCollection, HTMLDocument: A.HtmlDocument, HTMLInputElement: A.InputElement, KeyboardEvent: A.KeyboardEvent, Location: A.Location, MouseEvent: A.MouseEvent, DragEvent: A.MouseEvent, PointerEvent: A.MouseEvent, WheelEvent: A.MouseEvent, DocumentFragment: A.Node, ShadowRoot: A.Node, DocumentType: A.Node, Node: A.Node, NodeList: A.NodeList, RadioNodeList: A.NodeList, HTMLSelectElement: A.SelectElement, HTMLSpanElement: A.SpanElement, HTMLTableElement: A.TableElement, HTMLTableRowElement: A.TableRowElement, HTMLTableSectionElement: A.TableSectionElement, HTMLTemplateElement: A.TemplateElement, HTMLTextAreaElement: A.TextAreaElement, CompositionEvent: A.UIEvent, FocusEvent: A.UIEvent, TextEvent: A.UIEvent, TouchEvent: A.UIEvent, UIEvent: A.UIEvent, HTMLUListElement: A.UListElement, Window: A.Window, DOMWindow: A.Window, Attr: A._Attr, NamedNodeMap: A._NamedNodeMap, MozNamedAttrMap: A._NamedNodeMap, SVGScriptElement: A.ScriptElement0, SVGAElement: A.SvgElement, SVGAnimateElement: A.SvgElement, SVGAnimateMotionElement: A.SvgElement, SVGAnimateTransformElement: A.SvgElement, SVGAnimationElement: A.SvgElement, SVGCircleElement: A.SvgElement, SVGClipPathElement: A.SvgElement, SVGDefsElement: A.SvgElement, SVGDescElement: A.SvgElement, SVGDiscardElement: A.SvgElement, SVGEllipseElement: A.SvgElement, SVGFEBlendElement: A.SvgElement, SVGFEColorMatrixElement: A.SvgElement, SVGFEComponentTransferElement: A.SvgElement, SVGFECompositeElement: A.SvgElement, SVGFEConvolveMatrixElement: A.SvgElement, SVGFEDiffuseLightingElement: A.SvgElement, SVGFEDisplacementMapElement: A.SvgElement, SVGFEDistantLightElement: A.SvgElement, SVGFEFloodElement: A.SvgElement, SVGFEFuncAElement: A.SvgElement, SVGFEFuncBElement: A.SvgElement, SVGFEFuncGElement: A.SvgElement, SVGFEFuncRElement: A.SvgElement, SVGFEGaussianBlurElement: A.SvgElement, SVGFEImageElement: A.SvgElement, SVGFEMergeElement: A.SvgElement, SVGFEMergeNodeElement: A.SvgElement, SVGFEMorphologyElement: A.SvgElement, SVGFEOffsetElement: A.SvgElement, SVGFEPointLightElement: A.SvgElement, SVGFESpecularLightingElement: A.SvgElement, SVGFESpotLightElement: A.SvgElement, SVGFETileElement: A.SvgElement, SVGFETurbulenceElement: A.SvgElement, SVGFilterElement: A.SvgElement, SVGForeignObjectElement: A.SvgElement, SVGGElement: A.SvgElement, SVGGeometryElement: A.SvgElement, SVGGraphicsElement: A.SvgElement, SVGImageElement: A.SvgElement, SVGLineElement: A.SvgElement, SVGLinearGradientElement: A.SvgElement, SVGMarkerElement: A.SvgElement, SVGMaskElement: A.SvgElement, SVGMetadataElement: A.SvgElement, SVGPathElement: A.SvgElement, SVGPatternElement: A.SvgElement, SVGPolygonElement: A.SvgElement, SVGPolylineElement: A.SvgElement, SVGRadialGradientElement: A.SvgElement, SVGRectElement: A.SvgElement, SVGSetElement: A.SvgElement, SVGStopElement: A.SvgElement, SVGStyleElement: A.SvgElement, SVGSVGElement: A.SvgElement, SVGSwitchElement: A.SvgElement, SVGSymbolElement: A.SvgElement, SVGTSpanElement: A.SvgElement, SVGTextContentElement: A.SvgElement, SVGTextElement: A.SvgElement, SVGTextPathElement: A.SvgElement, SVGTextPositioningElement: A.SvgElement, SVGTitleElement: A.SvgElement, SVGUseElement: A.SvgElement, SVGViewElement: A.SvgElement, SVGGradientElement: A.SvgElement, SVGComponentTransferFunctionElement: A.SvgElement, SVGFEDropShadowElement: A.SvgElement, SVGMPathElement: A.SvgElement, SVGElement: A.SvgElement});
-    hunkHelpers.setOrUpdateLeafTags({DOMError: true, MediaError: true, Navigator: true, NavigatorConcurrentHardware: true, NavigatorUserMediaError: true, OverconstrainedError: true, PositionError: true, GeolocationPositionError: true, Range: true, HTMLAudioElement: true, HTMLBRElement: true, HTMLCanvasElement: true, HTMLContentElement: true, HTMLDListElement: true, HTMLDataElement: true, HTMLDataListElement: true, HTMLDetailsElement: true, HTMLDialogElement: true, HTMLEmbedElement: true, HTMLFieldSetElement: true, HTMLHRElement: true, HTMLHeadElement: true, HTMLHeadingElement: true, HTMLHtmlElement: true, HTMLIFrameElement: true, HTMLImageElement: true, HTMLLIElement: true, HTMLLabelElement: true, HTMLLegendElement: true, HTMLLinkElement: true, HTMLMapElement: true, HTMLMediaElement: true, HTMLMenuElement: true, HTMLMetaElement: true, HTMLMeterElement: true, HTMLModElement: true, HTMLOListElement: true, HTMLObjectElement: true, HTMLOptGroupElement: true, HTMLOptionElement: true, HTMLOutputElement: true, HTMLParagraphElement: true, HTMLParamElement: true, HTMLPictureElement: true, HTMLPreElement: true, HTMLProgressElement: true, HTMLQuoteElement: true, HTMLScriptElement: true, HTMLShadowElement: true, HTMLSlotElement: true, HTMLSourceElement: true, HTMLStyleElement: true, HTMLTableCaptionElement: true, HTMLTableCellElement: true, HTMLTableDataCellElement: true, HTMLTableHeaderCellElement: true, HTMLTableColElement: true, HTMLTimeElement: true, HTMLTitleElement: true, HTMLTrackElement: true, HTMLUnknownElement: true, HTMLVideoElement: true, HTMLDirectoryElement: true, HTMLFontElement: true, HTMLFrameElement: true, HTMLFrameSetElement: true, HTMLMarqueeElement: true, HTMLElement: false, HTMLAnchorElement: true, HTMLAreaElement: true, HTMLBaseElement: true, HTMLBodyElement: true, HTMLButtonElement: true, CDATASection: true, CharacterData: true, Comment: true, ProcessingInstruction: true, Text: true, CSSStyleDeclaration: true, MSStyleCSSProperties: true, CSS2Properties: true, HTMLDivElement: true, XMLDocument: true, Document: false, DOMException: true, DOMImplementation: true, MathMLElement: true, Element: false, AbortPaymentEvent: true, AnimationEvent: true, AnimationPlaybackEvent: true, ApplicationCacheErrorEvent: true, BackgroundFetchClickEvent: true, BackgroundFetchEvent: true, BackgroundFetchFailEvent: true, BackgroundFetchedEvent: true, BeforeInstallPromptEvent: true, BeforeUnloadEvent: true, BlobEvent: true, CanMakePaymentEvent: true, ClipboardEvent: true, CloseEvent: true, CustomEvent: true, DeviceMotionEvent: true, DeviceOrientationEvent: true, ErrorEvent: true, ExtendableEvent: true, ExtendableMessageEvent: true, FetchEvent: true, FontFaceSetLoadEvent: true, ForeignFetchEvent: true, GamepadEvent: true, HashChangeEvent: true, InstallEvent: true, MediaEncryptedEvent: true, MediaKeyMessageEvent: true, MediaQueryListEvent: true, MediaStreamEvent: true, MediaStreamTrackEvent: true, MessageEvent: true, MIDIConnectionEvent: true, MIDIMessageEvent: true, MutationEvent: true, NotificationEvent: true, PageTransitionEvent: true, PaymentRequestEvent: true, PaymentRequestUpdateEvent: true, PopStateEvent: true, PresentationConnectionAvailableEvent: true, PresentationConnectionCloseEvent: true, ProgressEvent: true, PromiseRejectionEvent: true, PushEvent: true, RTCDataChannelEvent: true, RTCDTMFToneChangeEvent: true, RTCPeerConnectionIceEvent: true, RTCTrackEvent: true, SecurityPolicyViolationEvent: true, SensorErrorEvent: true, SpeechRecognitionError: true, SpeechRecognitionEvent: true, SpeechSynthesisEvent: true, StorageEvent: true, SyncEvent: true, TrackEvent: true, TransitionEvent: true, WebKitTransitionEvent: true, VRDeviceEvent: true, VRDisplayEvent: true, VRSessionEvent: true, MojoInterfaceRequestEvent: true, ResourceProgressEvent: true, USBConnectionEvent: true, IDBVersionChangeEvent: true, AudioProcessingEvent: true, OfflineAudioCompletionEvent: true, WebGLContextEvent: true, Event: false, InputEvent: false, SubmitEvent: false, EventTarget: false, HTMLFormElement: true, HTMLCollection: true, HTMLFormControlsCollection: true, HTMLOptionsCollection: true, HTMLDocument: true, HTMLInputElement: true, KeyboardEvent: true, Location: true, MouseEvent: true, DragEvent: true, PointerEvent: true, WheelEvent: true, DocumentFragment: true, ShadowRoot: true, DocumentType: true, Node: false, NodeList: true, RadioNodeList: true, HTMLSelectElement: true, HTMLSpanElement: true, HTMLTableElement: true, HTMLTableRowElement: true, HTMLTableSectionElement: true, HTMLTemplateElement: true, HTMLTextAreaElement: true, CompositionEvent: true, FocusEvent: true, TextEvent: true, TouchEvent: true, UIEvent: false, HTMLUListElement: true, Window: true, DOMWindow: true, Attr: true, NamedNodeMap: true, MozNamedAttrMap: true, SVGScriptElement: true, SVGAElement: true, SVGAnimateElement: true, SVGAnimateMotionElement: true, SVGAnimateTransformElement: true, SVGAnimationElement: true, SVGCircleElement: true, SVGClipPathElement: true, SVGDefsElement: true, SVGDescElement: true, SVGDiscardElement: true, SVGEllipseElement: true, SVGFEBlendElement: true, SVGFEColorMatrixElement: true, SVGFEComponentTransferElement: true, SVGFECompositeElement: true, SVGFEConvolveMatrixElement: true, SVGFEDiffuseLightingElement: true, SVGFEDisplacementMapElement: true, SVGFEDistantLightElement: true, SVGFEFloodElement: true, SVGFEFuncAElement: true, SVGFEFuncBElement: true, SVGFEFuncGElement: true, SVGFEFuncRElement: true, SVGFEGaussianBlurElement: true, SVGFEImageElement: true, SVGFEMergeElement: true, SVGFEMergeNodeElement: true, SVGFEMorphologyElement: true, SVGFEOffsetElement: true, SVGFEPointLightElement: true, SVGFESpecularLightingElement: true, SVGFESpotLightElement: true, SVGFETileElement: true, SVGFETurbulenceElement: true, SVGFilterElement: true, SVGForeignObjectElement: true, SVGGElement: true, SVGGeometryElement: true, SVGGraphicsElement: true, SVGImageElement: true, SVGLineElement: true, SVGLinearGradientElement: true, SVGMarkerElement: true, SVGMaskElement: true, SVGMetadataElement: true, SVGPathElement: true, SVGPatternElement: true, SVGPolygonElement: true, SVGPolylineElement: true, SVGRadialGradientElement: true, SVGRectElement: true, SVGSetElement: true, SVGStopElement: true, SVGStyleElement: true, SVGSVGElement: true, SVGSwitchElement: true, SVGSymbolElement: true, SVGTSpanElement: true, SVGTextContentElement: true, SVGTextElement: true, SVGTextPathElement: true, SVGTextPositioningElement: true, SVGTitleElement: true, SVGUseElement: true, SVGViewElement: true, SVGGradientElement: true, SVGComponentTransferFunctionElement: true, SVGFEDropShadowElement: true, SVGMPathElement: true, SVGElement: false});
+    hunkHelpers.setOrUpdateInterceptorsByTag({DOMError: J.JavaScriptObject, MediaError: J.JavaScriptObject, Navigator: J.JavaScriptObject, NavigatorConcurrentHardware: J.JavaScriptObject, NavigatorUserMediaError: J.JavaScriptObject, OverconstrainedError: J.JavaScriptObject, PositionError: J.JavaScriptObject, GeolocationPositionError: J.JavaScriptObject, Range: J.JavaScriptObject, HTMLAudioElement: A.HtmlElement, HTMLBRElement: A.HtmlElement, HTMLCanvasElement: A.HtmlElement, HTMLContentElement: A.HtmlElement, HTMLDListElement: A.HtmlElement, HTMLDataElement: A.HtmlElement, HTMLDataListElement: A.HtmlElement, HTMLDetailsElement: A.HtmlElement, HTMLDialogElement: A.HtmlElement, HTMLEmbedElement: A.HtmlElement, HTMLFieldSetElement: A.HtmlElement, HTMLHRElement: A.HtmlElement, HTMLHeadElement: A.HtmlElement, HTMLHeadingElement: A.HtmlElement, HTMLHtmlElement: A.HtmlElement, HTMLIFrameElement: A.HtmlElement, HTMLImageElement: A.HtmlElement, HTMLLIElement: A.HtmlElement, HTMLLabelElement: A.HtmlElement, HTMLLegendElement: A.HtmlElement, HTMLLinkElement: A.HtmlElement, HTMLMapElement: A.HtmlElement, HTMLMediaElement: A.HtmlElement, HTMLMenuElement: A.HtmlElement, HTMLMetaElement: A.HtmlElement, HTMLMeterElement: A.HtmlElement, HTMLModElement: A.HtmlElement, HTMLOListElement: A.HtmlElement, HTMLObjectElement: A.HtmlElement, HTMLOptGroupElement: A.HtmlElement, HTMLOptionElement: A.HtmlElement, HTMLOutputElement: A.HtmlElement, HTMLParagraphElement: A.HtmlElement, HTMLParamElement: A.HtmlElement, HTMLPictureElement: A.HtmlElement, HTMLPreElement: A.HtmlElement, HTMLProgressElement: A.HtmlElement, HTMLQuoteElement: A.HtmlElement, HTMLScriptElement: A.HtmlElement, HTMLShadowElement: A.HtmlElement, HTMLSlotElement: A.HtmlElement, HTMLSourceElement: A.HtmlElement, HTMLStyleElement: A.HtmlElement, HTMLTableCaptionElement: A.HtmlElement, HTMLTableCellElement: A.HtmlElement, HTMLTableDataCellElement: A.HtmlElement, HTMLTableHeaderCellElement: A.HtmlElement, HTMLTableColElement: A.HtmlElement, HTMLTimeElement: A.HtmlElement, HTMLTitleElement: A.HtmlElement, HTMLTrackElement: A.HtmlElement, HTMLUnknownElement: A.HtmlElement, HTMLVideoElement: A.HtmlElement, HTMLDirectoryElement: A.HtmlElement, HTMLFontElement: A.HtmlElement, HTMLFrameElement: A.HtmlElement, HTMLFrameSetElement: A.HtmlElement, HTMLMarqueeElement: A.HtmlElement, HTMLElement: A.HtmlElement, HTMLAnchorElement: A.AnchorElement, HTMLAreaElement: A.AreaElement, HTMLBaseElement: A.BaseElement, HTMLBodyElement: A.BodyElement, HTMLButtonElement: A.ButtonElement, CDATASection: A.CharacterData, CharacterData: A.CharacterData, Comment: A.CharacterData, ProcessingInstruction: A.CharacterData, Text: A.CharacterData, CSSStyleDeclaration: A.CssStyleDeclaration, MSStyleCSSProperties: A.CssStyleDeclaration, CSS2Properties: A.CssStyleDeclaration, HTMLDivElement: A.DivElement, XMLDocument: A.Document, Document: A.Document, DOMException: A.DomException, DOMImplementation: A.DomImplementation, MathMLElement: A.Element, Element: A.Element, AbortPaymentEvent: A.Event, AnimationEvent: A.Event, AnimationPlaybackEvent: A.Event, ApplicationCacheErrorEvent: A.Event, BackgroundFetchClickEvent: A.Event, BackgroundFetchEvent: A.Event, BackgroundFetchFailEvent: A.Event, BackgroundFetchedEvent: A.Event, BeforeInstallPromptEvent: A.Event, BeforeUnloadEvent: A.Event, BlobEvent: A.Event, CanMakePaymentEvent: A.Event, ClipboardEvent: A.Event, CloseEvent: A.Event, CustomEvent: A.Event, DeviceMotionEvent: A.Event, DeviceOrientationEvent: A.Event, ErrorEvent: A.Event, ExtendableEvent: A.Event, ExtendableMessageEvent: A.Event, FetchEvent: A.Event, FontFaceSetLoadEvent: A.Event, ForeignFetchEvent: A.Event, GamepadEvent: A.Event, HashChangeEvent: A.Event, InstallEvent: A.Event, MediaEncryptedEvent: A.Event, MediaKeyMessageEvent: A.Event, MediaQueryListEvent: A.Event, MediaStreamEvent: A.Event, MediaStreamTrackEvent: A.Event, MessageEvent: A.Event, MIDIConnectionEvent: A.Event, MIDIMessageEvent: A.Event, MutationEvent: A.Event, NotificationEvent: A.Event, PageTransitionEvent: A.Event, PaymentRequestEvent: A.Event, PaymentRequestUpdateEvent: A.Event, PopStateEvent: A.Event, PresentationConnectionAvailableEvent: A.Event, PresentationConnectionCloseEvent: A.Event, ProgressEvent: A.Event, PromiseRejectionEvent: A.Event, PushEvent: A.Event, RTCDataChannelEvent: A.Event, RTCDTMFToneChangeEvent: A.Event, RTCPeerConnectionIceEvent: A.Event, RTCTrackEvent: A.Event, SecurityPolicyViolationEvent: A.Event, SensorErrorEvent: A.Event, SpeechRecognitionError: A.Event, SpeechRecognitionEvent: A.Event, SpeechSynthesisEvent: A.Event, StorageEvent: A.Event, SyncEvent: A.Event, TrackEvent: A.Event, TransitionEvent: A.Event, WebKitTransitionEvent: A.Event, VRDeviceEvent: A.Event, VRDisplayEvent: A.Event, VRSessionEvent: A.Event, MojoInterfaceRequestEvent: A.Event, ResourceProgressEvent: A.Event, USBConnectionEvent: A.Event, IDBVersionChangeEvent: A.Event, AudioProcessingEvent: A.Event, OfflineAudioCompletionEvent: A.Event, WebGLContextEvent: A.Event, Event: A.Event, InputEvent: A.Event, SubmitEvent: A.Event, EventTarget: A.EventTarget, HTMLFormElement: A.FormElement, HTMLCollection: A.HtmlCollection, HTMLFormControlsCollection: A.HtmlCollection, HTMLOptionsCollection: A.HtmlCollection, HTMLDocument: A.HtmlDocument, HTMLInputElement: A.InputElement, KeyboardEvent: A.KeyboardEvent, Location: A.Location, MouseEvent: A.MouseEvent, DragEvent: A.MouseEvent, PointerEvent: A.MouseEvent, WheelEvent: A.MouseEvent, DocumentFragment: A.Node, ShadowRoot: A.Node, DocumentType: A.Node, Node: A.Node, NodeList: A.NodeList, RadioNodeList: A.NodeList, HTMLSelectElement: A.SelectElement, HTMLSpanElement: A.SpanElement, Storage: A.Storage, HTMLTableElement: A.TableElement, HTMLTableRowElement: A.TableRowElement, HTMLTableSectionElement: A.TableSectionElement, HTMLTemplateElement: A.TemplateElement, HTMLTextAreaElement: A.TextAreaElement, CompositionEvent: A.UIEvent, FocusEvent: A.UIEvent, TextEvent: A.UIEvent, TouchEvent: A.UIEvent, UIEvent: A.UIEvent, HTMLUListElement: A.UListElement, Window: A.Window, DOMWindow: A.Window, Attr: A._Attr, NamedNodeMap: A._NamedNodeMap, MozNamedAttrMap: A._NamedNodeMap, SVGScriptElement: A.ScriptElement0, SVGAElement: A.SvgElement, SVGAnimateElement: A.SvgElement, SVGAnimateMotionElement: A.SvgElement, SVGAnimateTransformElement: A.SvgElement, SVGAnimationElement: A.SvgElement, SVGCircleElement: A.SvgElement, SVGClipPathElement: A.SvgElement, SVGDefsElement: A.SvgElement, SVGDescElement: A.SvgElement, SVGDiscardElement: A.SvgElement, SVGEllipseElement: A.SvgElement, SVGFEBlendElement: A.SvgElement, SVGFEColorMatrixElement: A.SvgElement, SVGFEComponentTransferElement: A.SvgElement, SVGFECompositeElement: A.SvgElement, SVGFEConvolveMatrixElement: A.SvgElement, SVGFEDiffuseLightingElement: A.SvgElement, SVGFEDisplacementMapElement: A.SvgElement, SVGFEDistantLightElement: A.SvgElement, SVGFEFloodElement: A.SvgElement, SVGFEFuncAElement: A.SvgElement, SVGFEFuncBElement: A.SvgElement, SVGFEFuncGElement: A.SvgElement, SVGFEFuncRElement: A.SvgElement, SVGFEGaussianBlurElement: A.SvgElement, SVGFEImageElement: A.SvgElement, SVGFEMergeElement: A.SvgElement, SVGFEMergeNodeElement: A.SvgElement, SVGFEMorphologyElement: A.SvgElement, SVGFEOffsetElement: A.SvgElement, SVGFEPointLightElement: A.SvgElement, SVGFESpecularLightingElement: A.SvgElement, SVGFESpotLightElement: A.SvgElement, SVGFETileElement: A.SvgElement, SVGFETurbulenceElement: A.SvgElement, SVGFilterElement: A.SvgElement, SVGForeignObjectElement: A.SvgElement, SVGGElement: A.SvgElement, SVGGeometryElement: A.SvgElement, SVGGraphicsElement: A.SvgElement, SVGImageElement: A.SvgElement, SVGLineElement: A.SvgElement, SVGLinearGradientElement: A.SvgElement, SVGMarkerElement: A.SvgElement, SVGMaskElement: A.SvgElement, SVGMetadataElement: A.SvgElement, SVGPathElement: A.SvgElement, SVGPatternElement: A.SvgElement, SVGPolygonElement: A.SvgElement, SVGPolylineElement: A.SvgElement, SVGRadialGradientElement: A.SvgElement, SVGRectElement: A.SvgElement, SVGSetElement: A.SvgElement, SVGStopElement: A.SvgElement, SVGStyleElement: A.SvgElement, SVGSVGElement: A.SvgElement, SVGSwitchElement: A.SvgElement, SVGSymbolElement: A.SvgElement, SVGTSpanElement: A.SvgElement, SVGTextContentElement: A.SvgElement, SVGTextElement: A.SvgElement, SVGTextPathElement: A.SvgElement, SVGTextPositioningElement: A.SvgElement, SVGTitleElement: A.SvgElement, SVGUseElement: A.SvgElement, SVGViewElement: A.SvgElement, SVGGradientElement: A.SvgElement, SVGComponentTransferFunctionElement: A.SvgElement, SVGFEDropShadowElement: A.SvgElement, SVGMPathElement: A.SvgElement, SVGElement: A.SvgElement});
+    hunkHelpers.setOrUpdateLeafTags({DOMError: true, MediaError: true, Navigator: true, NavigatorConcurrentHardware: true, NavigatorUserMediaError: true, OverconstrainedError: true, PositionError: true, GeolocationPositionError: true, Range: true, HTMLAudioElement: true, HTMLBRElement: true, HTMLCanvasElement: true, HTMLContentElement: true, HTMLDListElement: true, HTMLDataElement: true, HTMLDataListElement: true, HTMLDetailsElement: true, HTMLDialogElement: true, HTMLEmbedElement: true, HTMLFieldSetElement: true, HTMLHRElement: true, HTMLHeadElement: true, HTMLHeadingElement: true, HTMLHtmlElement: true, HTMLIFrameElement: true, HTMLImageElement: true, HTMLLIElement: true, HTMLLabelElement: true, HTMLLegendElement: true, HTMLLinkElement: true, HTMLMapElement: true, HTMLMediaElement: true, HTMLMenuElement: true, HTMLMetaElement: true, HTMLMeterElement: true, HTMLModElement: true, HTMLOListElement: true, HTMLObjectElement: true, HTMLOptGroupElement: true, HTMLOptionElement: true, HTMLOutputElement: true, HTMLParagraphElement: true, HTMLParamElement: true, HTMLPictureElement: true, HTMLPreElement: true, HTMLProgressElement: true, HTMLQuoteElement: true, HTMLScriptElement: true, HTMLShadowElement: true, HTMLSlotElement: true, HTMLSourceElement: true, HTMLStyleElement: true, HTMLTableCaptionElement: true, HTMLTableCellElement: true, HTMLTableDataCellElement: true, HTMLTableHeaderCellElement: true, HTMLTableColElement: true, HTMLTimeElement: true, HTMLTitleElement: true, HTMLTrackElement: true, HTMLUnknownElement: true, HTMLVideoElement: true, HTMLDirectoryElement: true, HTMLFontElement: true, HTMLFrameElement: true, HTMLFrameSetElement: true, HTMLMarqueeElement: true, HTMLElement: false, HTMLAnchorElement: true, HTMLAreaElement: true, HTMLBaseElement: true, HTMLBodyElement: true, HTMLButtonElement: true, CDATASection: true, CharacterData: true, Comment: true, ProcessingInstruction: true, Text: true, CSSStyleDeclaration: true, MSStyleCSSProperties: true, CSS2Properties: true, HTMLDivElement: true, XMLDocument: true, Document: false, DOMException: true, DOMImplementation: true, MathMLElement: true, Element: false, AbortPaymentEvent: true, AnimationEvent: true, AnimationPlaybackEvent: true, ApplicationCacheErrorEvent: true, BackgroundFetchClickEvent: true, BackgroundFetchEvent: true, BackgroundFetchFailEvent: true, BackgroundFetchedEvent: true, BeforeInstallPromptEvent: true, BeforeUnloadEvent: true, BlobEvent: true, CanMakePaymentEvent: true, ClipboardEvent: true, CloseEvent: true, CustomEvent: true, DeviceMotionEvent: true, DeviceOrientationEvent: true, ErrorEvent: true, ExtendableEvent: true, ExtendableMessageEvent: true, FetchEvent: true, FontFaceSetLoadEvent: true, ForeignFetchEvent: true, GamepadEvent: true, HashChangeEvent: true, InstallEvent: true, MediaEncryptedEvent: true, MediaKeyMessageEvent: true, MediaQueryListEvent: true, MediaStreamEvent: true, MediaStreamTrackEvent: true, MessageEvent: true, MIDIConnectionEvent: true, MIDIMessageEvent: true, MutationEvent: true, NotificationEvent: true, PageTransitionEvent: true, PaymentRequestEvent: true, PaymentRequestUpdateEvent: true, PopStateEvent: true, PresentationConnectionAvailableEvent: true, PresentationConnectionCloseEvent: true, ProgressEvent: true, PromiseRejectionEvent: true, PushEvent: true, RTCDataChannelEvent: true, RTCDTMFToneChangeEvent: true, RTCPeerConnectionIceEvent: true, RTCTrackEvent: true, SecurityPolicyViolationEvent: true, SensorErrorEvent: true, SpeechRecognitionError: true, SpeechRecognitionEvent: true, SpeechSynthesisEvent: true, StorageEvent: true, SyncEvent: true, TrackEvent: true, TransitionEvent: true, WebKitTransitionEvent: true, VRDeviceEvent: true, VRDisplayEvent: true, VRSessionEvent: true, MojoInterfaceRequestEvent: true, ResourceProgressEvent: true, USBConnectionEvent: true, IDBVersionChangeEvent: true, AudioProcessingEvent: true, OfflineAudioCompletionEvent: true, WebGLContextEvent: true, Event: false, InputEvent: false, SubmitEvent: false, EventTarget: false, HTMLFormElement: true, HTMLCollection: true, HTMLFormControlsCollection: true, HTMLOptionsCollection: true, HTMLDocument: true, HTMLInputElement: true, KeyboardEvent: true, Location: true, MouseEvent: true, DragEvent: true, PointerEvent: true, WheelEvent: true, DocumentFragment: true, ShadowRoot: true, DocumentType: true, Node: false, NodeList: true, RadioNodeList: true, HTMLSelectElement: true, HTMLSpanElement: true, Storage: true, HTMLTableElement: true, HTMLTableRowElement: true, HTMLTableSectionElement: true, HTMLTemplateElement: true, HTMLTextAreaElement: true, CompositionEvent: true, FocusEvent: true, TextEvent: true, TouchEvent: true, UIEvent: false, HTMLUListElement: true, Window: true, DOMWindow: true, Attr: true, NamedNodeMap: true, MozNamedAttrMap: true, SVGScriptElement: true, SVGAElement: true, SVGAnimateElement: true, SVGAnimateMotionElement: true, SVGAnimateTransformElement: true, SVGAnimationElement: true, SVGCircleElement: true, SVGClipPathElement: true, SVGDefsElement: true, SVGDescElement: true, SVGDiscardElement: true, SVGEllipseElement: true, SVGFEBlendElement: true, SVGFEColorMatrixElement: true, SVGFEComponentTransferElement: true, SVGFECompositeElement: true, SVGFEConvolveMatrixElement: true, SVGFEDiffuseLightingElement: true, SVGFEDisplacementMapElement: true, SVGFEDistantLightElement: true, SVGFEFloodElement: true, SVGFEFuncAElement: true, SVGFEFuncBElement: true, SVGFEFuncGElement: true, SVGFEFuncRElement: true, SVGFEGaussianBlurElement: true, SVGFEImageElement: true, SVGFEMergeElement: true, SVGFEMergeNodeElement: true, SVGFEMorphologyElement: true, SVGFEOffsetElement: true, SVGFEPointLightElement: true, SVGFESpecularLightingElement: true, SVGFESpotLightElement: true, SVGFETileElement: true, SVGFETurbulenceElement: true, SVGFilterElement: true, SVGForeignObjectElement: true, SVGGElement: true, SVGGeometryElement: true, SVGGraphicsElement: true, SVGImageElement: true, SVGLineElement: true, SVGLinearGradientElement: true, SVGMarkerElement: true, SVGMaskElement: true, SVGMetadataElement: true, SVGPathElement: true, SVGPatternElement: true, SVGPolygonElement: true, SVGPolylineElement: true, SVGRadialGradientElement: true, SVGRectElement: true, SVGSetElement: true, SVGStopElement: true, SVGStyleElement: true, SVGSVGElement: true, SVGSwitchElement: true, SVGSymbolElement: true, SVGTSpanElement: true, SVGTextContentElement: true, SVGTextElement: true, SVGTextPathElement: true, SVGTextPositioningElement: true, SVGTitleElement: true, SVGUseElement: true, SVGViewElement: true, SVGGradientElement: true, SVGComponentTransferFunctionElement: true, SVGFEDropShadowElement: true, SVGMPathElement: true, SVGElement: false});
   })();
   Function.prototype.call$2 = function(a, b) {
     return this(a, b);
@@ -7053,6 +7798,9 @@
   };
   Function.prototype.call$4 = function(a, b, c, d) {
     return this(a, b, c, d);
+  };
+  Function.prototype.call$1$1 = function(a) {
+    return this(a);
   };
   convertAllToFastObject(holders);
   convertToFastObject($);

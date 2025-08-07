@@ -1,4 +1,5 @@
 import 'dart:html';
+import 'dart:convert';
 
 void main() {
   print('Iniciando aplicação...');
@@ -29,6 +30,34 @@ void main() {
     // Variáveis de paginação
     int currentPage = 1;
     int itemsPerPage = 5;
+    
+    // Função para salvar tarefas no localStorage
+    void saveTasksToStorage() {
+      try {
+        final tasksJson = jsonEncode(tasks);
+        window.localStorage['todo_tasks'] = tasksJson;
+        print('Tarefas salvas no localStorage: ${tasks.length} tarefas');
+      } catch (e) {
+        print('Erro ao salvar tarefas: $e');
+      }
+    }
+    
+    // Função para carregar tarefas do localStorage
+    void loadTasksFromStorage() {
+      try {
+        final tasksJson = window.localStorage['todo_tasks'];
+        if (tasksJson != null && tasksJson.isNotEmpty) {
+          final List<dynamic> tasksList = jsonDecode(tasksJson);
+          tasks = tasksList.map((task) => Map<String, dynamic>.from(task)).toList();
+          print('Tarefas carregadas do localStorage: ${tasks.length} tarefas');
+        } else {
+          print('Nenhuma tarefa encontrada no localStorage');
+        }
+      } catch (e) {
+        print('Erro ao carregar tarefas: $e');
+        tasks = []; // Reset para lista vazia em caso de erro
+      }
+    }
     
     // Função para calcular o total de páginas
     int getTotalPages() {
@@ -149,6 +178,7 @@ void main() {
           
           checkbox.addEventListener('change', (event) {
             tasks[globalIndex]['completed'] = checkbox.checked;
+            saveTasksToStorage(); // Salvar após alteração
             updateList();
           });
           
@@ -183,6 +213,7 @@ void main() {
                 if (newTitle.isNotEmpty) {
                   tasks[globalIndex]['title'] = newTitle;
                   tasks[globalIndex]['description'] = newDescription;
+                  saveTasksToStorage(); // Salvar após edição
                   editingIndex = -1; // Sair do modo de edição
                   updateList();
                 } else {
@@ -243,6 +274,7 @@ void main() {
               ..className = 'remove-btn'
               ..onClick.listen((_) {
                 tasks.removeAt(globalIndex);
+                saveTasksToStorage(); // Salvar após remoção
                 if (editingIndex == globalIndex) {
                   editingIndex = -1; // Sair do modo de edição se estava editando
                 } else if (editingIndex > globalIndex) {
@@ -297,6 +329,7 @@ void main() {
         // Ir para a última página quando adicionar uma nova tarefa
         currentPage = getTotalPages();
         
+        saveTasksToStorage(); // Salvar após adicionar
         updateList();
         print('Tarefa adicionada! Total: ${tasks.length}');
       } else {
@@ -311,6 +344,9 @@ void main() {
         addButton!.click();
       }
     });
+    
+    // Carregar tarefas do localStorage na inicialização
+    loadTasksFromStorage();
     
     // Inicializar
     updateList();
