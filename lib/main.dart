@@ -14,8 +14,9 @@ void main() {
     final taskList = querySelector('#taskList') as UListElement?;
     final countSpan = querySelector('#count') as DivElement?;
     final emptyState = querySelector('#emptyState') as DivElement?;
+    final paginationContainer = querySelector('#paginationContainer') as DivElement?;
     
-    if (taskTitleInput == null || addButton == null || taskList == null || countSpan == null || emptyState == null) {
+    if (taskTitleInput == null || addButton == null || taskList == null || countSpan == null || emptyState == null || paginationContainer == null) {
       print('Erro: Elementos não encontrados!');
       return;
     }
@@ -25,18 +26,114 @@ void main() {
     List<Map<String, dynamic>> tasks = [];
     int editingIndex = -1; // Índice da tarefa sendo editada (-1 = nenhuma)
     
+    // Variáveis de paginação
+    int currentPage = 1;
+    int itemsPerPage = 5;
+    
+    // Função para calcular o total de páginas
+    int getTotalPages() {
+      return (tasks.length / itemsPerPage).ceil();
+    }
+    
+    // Função para obter tarefas da página atual
+    List<Map<String, dynamic>> getCurrentPageTasks() {
+      int startIndex = (currentPage - 1) * itemsPerPage;
+      int endIndex = startIndex + itemsPerPage;
+      if (endIndex > tasks.length) {
+        endIndex = tasks.length;
+      }
+      return tasks.sublist(startIndex, endIndex);
+    }
+    
+    // Declarar funções como late para evitar dependência circular
+    late void Function() updateList;
+    late void Function() updatePagination;
+    
+    // Função para atualizar a paginação
+    updatePagination = () {
+      paginationContainer!.children.clear();
+      
+      int totalPages = getTotalPages();
+      
+      if (totalPages <= 1) {
+        paginationContainer!.style.display = 'none';
+        return;
+      }
+      
+      paginationContainer!.style.display = 'flex';
+      
+      // Botão anterior
+      final prevButton = ButtonElement()
+        ..text = '‹'
+        ..className = 'pagination-btn'
+        ..disabled = currentPage == 1;
+      
+      prevButton.addEventListener('click', (event) {
+        if (currentPage > 1) {
+          currentPage--;
+          updateList();
+        }
+      });
+      
+      paginationContainer!.append(prevButton);
+      
+      // Números das páginas
+      for (int i = 1; i <= totalPages; i++) {
+        final pageButton = ButtonElement()
+          ..text = '$i'
+          ..className = 'pagination-btn';
+        
+        if (i == currentPage) {
+          pageButton.className += ' active';
+        }
+        
+        pageButton.addEventListener('click', (event) {
+          currentPage = i;
+          updateList();
+        });
+        
+        paginationContainer!.append(pageButton);
+      }
+      
+      // Botão próximo
+      final nextButton = ButtonElement()
+        ..text = '›'
+        ..className = 'pagination-btn'
+        ..disabled = currentPage == totalPages;
+      
+      nextButton.addEventListener('click', (event) {
+        if (currentPage < totalPages) {
+          currentPage++;
+          updateList();
+        }
+      });
+      
+      paginationContainer!.append(nextButton);
+    };
+    
     // Função para atualizar a lista
-    void updateList() {
+    updateList = () {
       if (tasks.isEmpty) {
         taskList!.style.display = 'none';
         emptyState!.style.display = 'block';
+        paginationContainer!.style.display = 'none';
       } else {
         taskList!.style.display = 'block';
         emptyState!.style.display = 'none';
         
+        // Ajustar página atual se necessário
+        int totalPages = getTotalPages();
+        if (currentPage > totalPages && totalPages > 0) {
+          currentPage = totalPages;
+        }
+        
+        // Obter tarefas da página atual
+        List<Map<String, dynamic>> currentPageTasks = getCurrentPageTasks();
+        
         taskList!.children.clear();
-        for (int i = 0; i < tasks.length; i++) {
-          final task = tasks[i];
+        for (int i = 0; i < currentPageTasks.length; i++) {
+          final task = currentPageTasks[i];
+          final globalIndex = (currentPage - 1) * itemsPerPage + i;
           final li = LIElement();
           
           // Adicionar classe se concluída
@@ -51,14 +148,14 @@ void main() {
             ..checked = task['completed'] == true;
           
           checkbox.addEventListener('change', (event) {
-            tasks[i]['completed'] = checkbox.checked;
+            tasks[globalIndex]['completed'] = checkbox.checked;
             updateList();
           });
           
           final taskContent = DivElement()
             ..className = 'task-content';
           
-          if (editingIndex == i) {
+          if (editingIndex == globalIndex) {
             // Modo de edição
             final editTitleInput = InputElement()
               ..className = 'edit-title-input'
@@ -84,8 +181,8 @@ void main() {
                 final newDescription = editDescriptionInput.value?.trim() ?? '';
                 
                 if (newTitle.isNotEmpty) {
-                  tasks[i]['title'] = newTitle;
-                  tasks[i]['description'] = newDescription;
+                  tasks[globalIndex]['title'] = newTitle;
+                  tasks[globalIndex]['description'] = newDescription;
                   editingIndex = -1; // Sair do modo de edição
                   updateList();
                 } else {
@@ -136,7 +233,7 @@ void main() {
               ..text = 'Editar'
               ..className = 'edit-btn'
               ..onClick.listen((_) {
-                editingIndex = i; // Entrar no modo de edição
+                editingIndex = globalIndex; // Entrar no modo de edição
                 updateList();
               });
             
@@ -145,10 +242,10 @@ void main() {
               ..text = 'Remover'
               ..className = 'remove-btn'
               ..onClick.listen((_) {
-                tasks.removeAt(i);
-                if (editingIndex == i) {
+                tasks.removeAt(globalIndex);
+                if (editingIndex == globalIndex) {
                   editingIndex = -1; // Sair do modo de edição se estava editando
-                } else if (editingIndex > i) {
+                } else if (editingIndex > globalIndex) {
                   editingIndex--; // Ajustar índice se necessário
                 }
                 updateList();
@@ -174,7 +271,10 @@ void main() {
       countSpan!.children.clear();
       countSpan!.append(icon);
       countSpan!.append(Text(' Tarefas pendentes: $pendingCount'));
-    }
+      
+      // Atualizar paginação
+      updatePagination();
+    };
     
     // Adicionar tarefa
     addButton!.addEventListener('click', (event) {
@@ -193,6 +293,10 @@ void main() {
         if (taskDescriptionInput != null) {
           taskDescriptionInput!.value = '';
         }
+        
+        // Ir para a última página quando adicionar uma nova tarefa
+        currentPage = getTotalPages();
+        
         updateList();
         print('Tarefa adicionada! Total: ${tasks.length}');
       } else {

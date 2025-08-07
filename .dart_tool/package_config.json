@@ -3,7 +3,7 @@
   "packages": [
     {
       "name": "web",
-      "rootUri": "file:///home/livia/.pub-cache/hosted/pub.dev/web-0.1.4-beta",
+      "rootUri": "file:///C:/Users/Leticia/AppData/Local/Pub/Cache/hosted/pub.dev/web-0.1.4-beta",
       "packageUri": "lib/",
       "languageVersion": "3.1"
     },
@@ -14,10 +14,7 @@
       "languageVersion": "3.0"
     }
   ],
-  "generated": "2025-08-07T02:30:10.928695Z",
   "generator": "pub",
-  "generatorVersion": "3.7.2",
-  "flutterRoot": "file:///home/livia/snap/flutter/common/flutter",
-  "flutterVersion": "3.29.2",
-  "pubCache": "file:///home/livia/.pub-cache"
+  "generatorVersion": "3.8.3",
+  "pubCache": "file:///C:/Users/Leticia/AppData/Local/Pub/Cache"
 }

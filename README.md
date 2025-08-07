@@ -11,6 +11,7 @@ Uma aplicação simples de lista de tarefas feita em Dart com interface moderna 
 - ✅ **Contador de tarefas pendentes**
 - ✅ **Interface responsiva** para mobile
 - ✅ **Design moderno** com tema rosa
+- ✅ **Paginação** - 5 tarefas por página
 
 ## 🚀 Como Executar
 
@@ -32,7 +33,8 @@ Uma aplicação simples de lista de tarefas feita em Dart com interface moderna 
 ├── lib/
 │   └── main.dart          # Código principal em Dart
 ├── web/
-│   ├── index.html         # Interface HTML + CSS
+│   ├── index.html         # Interface HTML
+│   ├── style.css          # Estilos CSS
 │   └── main.dart.js       # JavaScript compilado
 ├── pubspec.yaml           # Configuração do projeto
 ├── run.sh                 # Script de execução
@@ -165,61 +167,3 @@ cancelButton.onClick.listen(...)              // Cancelar edição
 ```dart
 taskTitleInput.addEventListener('keypress', ...)  // Enter para adicionar
 ```
-
-#### **Eventos de Mudança**
-```dart
-checkbox.addEventListener('change', ...)      // Marcar como concluída
-```
-
-### 🎯 **Funcionalidades Avançadas**
-
-#### **Modo de Edição Inline**
-- ✅ Campos editáveis aparecem no lugar do texto
-- ✅ Botões "Salvar" e "Cancelar" substituem "Editar" e "Remover"
-- ✅ Validação de título obrigatório
-- ✅ Foco automático no campo de título
-
-#### **Gerenciamento de Estado**
-- ✅ Controle de qual tarefa está sendo editada
-- ✅ Ajuste automático de índices ao remover tarefas
-- ✅ Preservação do estado de edição
-
-#### **Interface Responsiva**
-- ✅ Layout adaptável para mobile
-- ✅ Botões reorganizados em telas pequenas
-- ✅ Tamanho de fonte otimizado para evitar zoom
-
-## 🎮 Como Usar
-
-1. **Adicionar Tarefa:**
-   - Digite o título no campo "Título da tarefa"
-   - Opcional: adicione uma descrição
-   - Clique em "Adicionar Tarefa" ou pressione Enter
-
-2. **Marcar como Concluída:**
-   - Clique no checkbox ao lado da tarefa
-   - A tarefa ficará riscada e com opacidade reduzida
-
-3. **Editar Tarefa:**
-   - Clique no botão "Editar" (verde)
-   - Os campos ficam editáveis inline
-   - Clique "Salvar" para confirmar ou "Cancelar" para descartar
-
-4. **Remover Tarefa:**
-   - Clique no botão "Remover" (rosa)
-   - A tarefa é removida imediatamente
-
-## 🛠️ Tecnologias Utilizadas
-
-- **Dart** - Linguagem principal
-- **HTML5** - Estrutura da página
-- **CSS3** - Estilização com gradientes e animações
-- **JavaScript** - Compilado a partir do Dart
-- **Font Awesome** - Ícones
-- **Python HTTP Server** - Servidor local para desenvolvimento
-
-## 📱 Compatibilidade
-
-- ✅ Chrome, Firefox, Safari, Edge
-- ✅ Dispositivos móveis (responsivo)
-- ✅ Navegadores modernos com suporte a ES6+ 

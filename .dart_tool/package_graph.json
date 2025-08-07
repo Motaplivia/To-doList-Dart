@@ -1,0 +1,21 @@
+{
+  "roots": [
+    "todo_list"
+  ],
+  "packages": [
+    {
+      "name": "todo_list",
+      "version": "1.0.0",
+      "dependencies": [
+        "web"
+      ],
+      "devDependencies": []
+    },
+    {
+      "name": "web",
+      "version": "0.1.4-beta",
+      "dependencies": []
+    }
+  ],
+  "configVersion": 1
+}
